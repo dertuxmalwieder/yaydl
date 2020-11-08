@@ -59,7 +59,7 @@ Nobody has provided any packages for `yaydl` yet. You can help!
 
 If you do that well (and regularly) enough, I'll probably grant you commit access to the upstream Fossil repository.
 
-### Add new definitions
+### Add support for new sites
 
 1. Implement `definitions::SiteDefinition` as `handlers/<YourSite>.rs`.
 2. Push the new handler to the inventory: `inventory::submit! {  &YourSiteHandler as &dyn SiteDefinition }`
