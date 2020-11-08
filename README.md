@@ -92,13 +92,13 @@ impl SiteDefinition for NoopExampleHandler {
         Ok("".to_string())
     }
     
-    fn find_video_direct_url<'a>(&'a self, url: &'a str) -> Result<String> {
-    	  // Return the direct download URL of the video here.
+    fn find_video_direct_url<'a>(&'a self, url: &'a str, onlyaudio: bool) -> Result<String> {
+    	  // Return the direct download URL of the video (or its audio version) here.
     	  Ok("".to_string())
     }
 
-    fn find_video_file_extension<'a>(&'a self, url: &'a str) -> Result<String> {
-        // Return the designated file extension of the video here.
+    fn find_video_file_extension<'a>(&'a self, url: &'a str, onlyaudio: bool) -> Result<String> {
+        // Return the designated file extension of the video (or audio) file here.
         Ok("mp4".to_string())
     }
 

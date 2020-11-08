@@ -68,7 +68,7 @@ impl SiteDefinition for YouTubeHandler {
         }
     }
 
-    fn find_video_direct_url<'a>(&'a self, url: &'a str) -> Result<String> {
+    fn find_video_direct_url<'a>(&'a self, url: &'a str, onlyaudio: bool) -> Result<String> {
         let id_regex = Regex::new(r"(?:v=|.be/)(.*$)").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         unsafe {
@@ -122,10 +122,10 @@ impl SiteDefinition for YouTubeHandler {
                 let is_same_or_better_video = (last_vq == this_vq) || is_better_video;
 
                 let is_better_quality = is_better_audio && is_same_or_better_video
-                    || is_better_video && is_same_or_better_audio;
+                    || (onlyaudio || is_better_video) && is_same_or_better_audio;
 
-                if itag["mimeType"].to_string().contains("video/")
-                    && itag["quality"] != json!(null)
+                if (!onlyaudio || itag["mimeType"].to_string().contains("video/"))
+                    && (!onlyaudio || itag["quality"] != json!(null))
                     && itag["audioQuality"] != json!(null)
                     && (last_vq == "" || last_aq == "" || is_better_quality)
                 {
@@ -160,12 +160,15 @@ impl SiteDefinition for YouTubeHandler {
         "YouTube".to_string()
     }
 
-    fn find_video_file_extension<'a>(&'a self, _url: &'a str) -> Result<String> {
+    fn find_video_file_extension<'a>(&'a self, _url: &'a str, _onlyaudio: bool) -> Result<String> {
         // By this point, we have already filled VIDEO_MIME. Let's just use that.
         unsafe {
             let mut ext = "mp4";
-            if VIDEO_MIME.contains("video/webm") {
+            if VIDEO_MIME.contains("/webm") {
                 ext = "webm";
+            }
+            else if VIDEO_MIME.contains("audio/mp4") {
+                ext = "m4a";
             }
             Ok(ext.to_string())
         }

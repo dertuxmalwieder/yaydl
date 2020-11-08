@@ -166,8 +166,10 @@ fn main() -> Result<()> {
                         println!("Title: {}", vt);
                     }
 
-                    let ext = handler.find_video_file_extension(in_url)?;
-                    let url = handler.find_video_direct_url(in_url)?;
+                    let ext =
+                        handler.find_video_file_extension(in_url, args.is_present("onlyaudio"))?;
+                    let url =
+                        handler.find_video_direct_url(in_url, args.is_present("onlyaudio"))?;
 
                     // Now let's download it:
                     let mut targetfile = format!(
@@ -186,12 +188,18 @@ fn main() -> Result<()> {
 
                     download(&url, &targetfile)?;
 
-                    if args.is_present("onlyaudio") {
+                    // Convert the file if needed.
+                    let mut outputext = "mp3";
+                    if let Some(in_outputext) = args.value_of("audioformat") {
+                        outputext = &in_outputext;
+                    }
+
+                    if args.is_present("onlyaudio") && ext != outputext {
                         if args.is_present("verbose") {
                             println!("Post-processing.");
                         }
 
-                        // Convert the video to an audio file.
+                        // Convert the file if needed.
                         let mut outputext = "mp3";
                         if let Some(in_outputext) = args.value_of("audioformat") {
                             outputext = &in_outputext;

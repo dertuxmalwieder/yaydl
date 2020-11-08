@@ -30,10 +30,10 @@ pub trait SiteDefinition {
     fn find_video_title<'a>(&'a self, url: &'a str) -> Result<String>;
 
     // returns the download URL of a video.
-    fn find_video_direct_url<'a>(&'a self, url: &'a str) -> Result<String>;
+    fn find_video_direct_url<'a>(&'a self, url: &'a str, onlyaudio: bool) -> Result<String>;
 
     // returns the file extension of the video (e.g. "mp4").
-    fn find_video_file_extension<'a>(&'a self, url: &'a str) -> Result<String>;
+    fn find_video_file_extension<'a>(&'a self, url: &'a str, onlyaudio: bool) -> Result<String>;
 
     // returns the name of the site (e.g. "YouTube").
     fn display_name<'a>(&'a self) -> String;
