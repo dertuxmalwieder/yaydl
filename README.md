@@ -51,7 +51,7 @@ Nobody has provided any packages for `yaydl` yet. You can help!
 
 ## How to contribute code
 
-1. Read and agree to the [Code of ~~Conduct~~ Merit](CODE_OF_MERIT.md).
+1. Read and agree to the [Code of ~~Conduct~~ Merit](CODE_OF_CONDUCT.md).
 2. Implicitly agree to the [LICENSE](LICENSE). Nobody reads those. I don't either.
 3. Find out if anyone has filed a GitHub Issue or even sent a Pull Request yet. Act accordingly.
 4. Send me a patch, either via e-mail (`yaydl at tuxproject dot de`), on the IRC or as a GitHub Pull Request. Note that GitHub only provides a mirror, so you'd double my work if you choose the latter. :-)
