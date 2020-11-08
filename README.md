@@ -11,7 +11,8 @@ yet another youtube down loader
 # Features
 
 * Can download videos.
-* Can optionally keep only the audio part of them (requires `ffmpeg`).
+* Can optionally keep only the audio part of them.
+* Could convert the resulting file to something else (requires `ffmpeg`).
 * Comes as a single binary (once compiled) - take it everywhere on your thumbdrive, no Python cruft required.
 
 ## Non-features
