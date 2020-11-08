@@ -166,10 +166,10 @@ fn main() -> Result<()> {
                         println!("Title: {}", vt);
                     }
 
-                    let ext =
-                        handler.find_video_file_extension(in_url, args.is_present("onlyaudio"))?;
                     let url =
                         handler.find_video_direct_url(in_url, args.is_present("onlyaudio"))?;
+                    let ext =
+                        handler.find_video_file_extension(in_url, args.is_present("onlyaudio"))?;
 
                     // Now let's download it:
                     let mut targetfile = format!(

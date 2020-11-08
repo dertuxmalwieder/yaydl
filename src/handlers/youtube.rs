@@ -127,7 +127,9 @@ impl SiteDefinition for YouTubeHandler {
                 if (!onlyaudio || itag["mimeType"].to_string().contains("video/"))
                     && (!onlyaudio || itag["quality"] != json!(null))
                     && itag["audioQuality"] != json!(null)
-                    && (last_vq == "" || last_aq == "" || is_better_quality)
+                    && (onlyaudio && this_vq == "" || !onlyaudio && last_vq == "" && this_vq != "")
+                    && last_aq == ""
+                    || is_better_quality
                 {
                     VIDEO_MIME = itag["mimeType"].to_string();
                     url_to_choose = itag["url"].as_str().unwrap();
@@ -166,10 +168,10 @@ impl SiteDefinition for YouTubeHandler {
             let mut ext = "mp4";
             if VIDEO_MIME.contains("/webm") {
                 ext = "webm";
-            }
-            else if VIDEO_MIME.contains("audio/mp4") {
+            } else if VIDEO_MIME.contains("audio/mp4") {
                 ext = "m4a";
             }
+            
             Ok(ext.to_string())
         }
     }
