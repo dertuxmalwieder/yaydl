@@ -199,12 +199,6 @@ fn main() -> Result<()> {
                             println!("Post-processing.");
                         }
 
-                        // Convert the file if needed.
-                        let mut outputext = "mp3";
-                        if let Some(in_outputext) = args.value_of("audioformat") {
-                            outputext = &in_outputext;
-                        }
-
                         let inpath = Path::new(&targetfile);
                         let mut outpathbuf = PathBuf::from(&targetfile);
                         outpathbuf.set_extension(outputext);

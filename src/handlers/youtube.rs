@@ -104,16 +104,18 @@ impl SiteDefinition for YouTubeHandler {
                 let this_aq = itag["audioQuality"].as_str().unwrap_or("");
                 let this_vq = itag["quality"].as_str().unwrap_or("");
 
-                let is_better_audio = (last_aq == aq1 && (this_aq == aq2 || this_aq == aq3))
+                let is_better_audio = (last_aq == "" && this_aq != "")
+                    || (last_aq == aq1 && (this_aq == aq2 || this_aq == aq3))
                     || (last_aq == aq2 && this_aq == aq3);
                 let is_same_or_better_audio = (last_aq == this_aq) || is_better_audio;
 
-                let is_better_video = (last_vq == vq1
-                    && (this_vq == vq2
-                        || this_vq == vq3
-                        || this_vq == vq4
-                        || this_vq == vq5
-                        || this_vq == vq6))
+                let is_better_video = (last_vq == "" && this_vq != "")
+                    || (last_vq == vq1
+                        && (this_vq == vq2
+                            || this_vq == vq3
+                            || this_vq == vq4
+                            || this_vq == vq5
+                            || this_vq == vq6))
                     || (last_vq == vq2
                         && (this_vq == vq3 || this_vq == vq4 || this_vq == vq5 || this_vq == vq6))
                     || (last_vq == vq3 && (this_vq == vq4 || this_vq == vq5 || this_vq == vq6))
@@ -121,14 +123,17 @@ impl SiteDefinition for YouTubeHandler {
                     || (last_vq == vq5 && this_vq == vq6);
                 let is_same_or_better_video = (last_vq == this_vq) || is_better_video;
 
-                let is_better_quality = is_better_audio && is_same_or_better_video
-                    || (onlyaudio || is_better_video) && is_same_or_better_audio;
+                let is_better_quality = (is_better_audio && is_same_or_better_video)
+                    || (is_better_video && is_same_or_better_audio)
+                    || (onlyaudio && is_better_audio);
 
-                if (!onlyaudio || itag["mimeType"].to_string().contains("video/"))
+                // If audio: Try to download the best audio quality.
+                // If video: Try to download the best combination.
+                if (onlyaudio && itag["mimeType"].to_string().contains("audio/")
+                    || !onlyaudio && itag["mimeType"].to_string().contains("video/"))
                     && (!onlyaudio || itag["quality"] != json!(null))
                     && itag["audioQuality"] != json!(null)
                     && (onlyaudio && this_vq == "" || !onlyaudio && last_vq == "" && this_vq != "")
-                    && last_aq == ""
                     || is_better_quality
                 {
                     VIDEO_MIME = itag["mimeType"].to_string();
@@ -171,7 +176,7 @@ impl SiteDefinition for YouTubeHandler {
             } else if VIDEO_MIME.contains("audio/mp4") {
                 ext = "m4a";
             }
-            
+
             Ok(ext.to_string())
         }
     }
