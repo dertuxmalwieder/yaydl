@@ -1,6 +1,6 @@
 [package]
 name = "yaydl"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Cthulhux <git@tuxproject.de>"]
 edition = "2018"
 

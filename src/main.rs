@@ -101,8 +101,9 @@ fn download(url: &str, filename: &str) -> Result<()> {
 
 fn main() -> Result<()> {
     // Argument parsing:
+    const VERSION: &'static str = env!("CARGO_PKG_VERSION");
     let args = App::new("yaydl")
-        .version("0.1.0")
+        .version(VERSION)
         .about("Yet Another Youtube Down Loader")
         .arg(Arg::new("onlyaudio")
              .about("Only keeps the audio stream")
