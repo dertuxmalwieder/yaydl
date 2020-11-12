@@ -18,7 +18,9 @@ yet another youtube down loader
 ## Currently supported sites
 
 * YouTube.com
-* There is an easy way to add more supported sites.
+* Vimeo.com
+
+There is an easy way to add more supported sites, see below for details.
 
 ## Non-features
 

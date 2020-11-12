@@ -16,6 +16,7 @@
 // Yet Another Youtube Down Loader
 // - handlers.rs file -
 
+mod vimeo;
 mod youtube;
 
 // Add your own modules here.
