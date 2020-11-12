@@ -15,6 +15,11 @@ yet another youtube down loader
 * Could convert the resulting file to something else (requires `ffmpeg`).
 * Comes as a single binary (once compiled) - take it everywhere on your thumbdrive, no Python cruft required.
 
+## Currently supported sites
+
+* YouTube.com
+* There is an easy way to add more supported sites.
+
 ## Non-features
 
 The list of features is deliberately kept short:
