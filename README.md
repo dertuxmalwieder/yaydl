@@ -1,6 +1,6 @@
 # yaydl
 
-yet another youtube down loader
+**y**et **a**nother **y**outube *(and more)* **d**own **l**oader
 
     % yaydl "https://www.youtube.com/watch?v=jNQXAC9IVRw"
 
@@ -26,7 +26,7 @@ There is an easy way to add more supported sites, see below for details.
 
 The list of features is deliberately kept short:
 
-* No output quality choice. `yaydl` assumes that your internet connection is good enough, or else you would stream, not download.
+* No output quality choice. `yaydl` assumes that you have a large hard drive and your internet connection is good enough, or else you would stream, not download.
 * No complex filters. This is a downloading tool.
 * No image file support. Videos only.
 
