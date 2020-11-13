@@ -62,8 +62,7 @@ fn download(url: &str, filename: &str) -> Result<()> {
                 "Couldn't download URL: {}. Error: {:?}",
                 url,
                 resp.status(),
-            ))
-            .into());
+            )));
         }
     };
 
@@ -101,7 +100,7 @@ fn download(url: &str, filename: &str) -> Result<()> {
 
 fn main() -> Result<()> {
     // Argument parsing:
-    const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
     let args = App::new("yaydl")
         .version(VERSION)
         .about("Yet Another Youtube Down Loader")
@@ -216,7 +215,7 @@ fn main() -> Result<()> {
                             outpathbuf
                                 .into_os_string()
                                 .into_string()
-                                .unwrap_or(targetfile.to_string())
+                                .unwrap_or_else(|_| targetfile.to_string())
                         );
                     } else {
                         // ... just success!
