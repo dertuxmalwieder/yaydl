@@ -1,5 +1,7 @@
 # yaydl
 
+[![Crates.io](https://img.shields.io/crates/v/yaydl)](https://crates.io/crates/yaydl)
+
 **y**et **a**nother **y**outube *(and more)* **d**own **l**oader
 
     % yaydl "https://www.youtube.com/watch?v=jNQXAC9IVRw"
