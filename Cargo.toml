@@ -1,8 +1,12 @@
 [package]
 name = "yaydl"
-version = "0.2.2"
+description = "yet another youtube (and more) down loader"
+version = "0.2.3"
 authors = ["Cthulhux <git@tuxproject.de>"]
 edition = "2018"
+license = "CDDL-1.0"
+repository = "https://code.rosaelefanten.org/yaydl"
+
 
 [dependencies]
 anyhow = "1.0"
