@@ -53,6 +53,10 @@ Install Rust (e.g. with [rustup](https://rustup.rs)), then:
     % cd yaydl
     % cargo build --release
 
+### From Cargo
+
+    % cargo install yaydl
+
 ### From your package manager
 
 Nobody has provided any packages for `yaydl` yet. You can help!
