@@ -46,7 +46,10 @@ unsafe fn get_video_info(url: &str) -> Result<Value> {
 
         // If yaydl stops here, the URL is invalid.
         // TODO: That should be more obvious to the user.
-        let video_info_url = search.name("URL").map_or("", |u| u.as_str()).replace("\\", "");
+        let video_info_url = search
+            .name("URL")
+            .map_or("", |u| u.as_str())
+            .replace("\\", "");
 
         // The "config_url" body is a JSON structure.
         // Grab and store it:
