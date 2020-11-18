@@ -19,3 +19,6 @@ regex = "1.4.1"
 reqwest = { version = "0.10.8", features = ["blocking"] }
 serde_json = "1.0"
 urlencoding = "1.1.1"
+
+[profile.release]
+lto = true
