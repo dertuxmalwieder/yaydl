@@ -107,12 +107,12 @@ impl SiteDefinition for YouTubeHandler {
                 let this_aq = itag["audioQuality"].as_str().unwrap_or("");
                 let this_vq = itag["quality"].as_str().unwrap_or("");
 
-                let is_better_audio = (last_aq == "" && this_aq != "")
+                let is_better_audio = (last_aq.is_empty() && !this_aq.is_empty())
                     || (last_aq == aq1 && (this_aq == aq2 || this_aq == aq3))
                     || (last_aq == aq2 && this_aq == aq3);
                 let is_same_or_better_audio = (last_aq == this_aq) || is_better_audio;
 
-                let is_better_video = (last_vq == "" && this_vq != "")
+                let is_better_video = (last_vq.is_empty() && !this_vq.is_empty())
                     || (last_vq == vq1
                         && (this_vq == vq2
                             || this_vq == vq3
@@ -136,7 +136,7 @@ impl SiteDefinition for YouTubeHandler {
                     || !onlyaudio && itag["mimeType"].to_string().contains("video/"))
                     && (!onlyaudio || itag["quality"] != json!(null))
                     && itag["audioQuality"] != json!(null)
-                    && (onlyaudio && this_vq == "" || !onlyaudio && last_vq == "" && this_vq != "")
+                    && (onlyaudio && this_vq.is_empty() || !onlyaudio && last_vq.is_empty() && !this_vq.is_empty())
                     || is_better_quality
                 {
                     VIDEO_MIME = itag["mimeType"].to_string();
