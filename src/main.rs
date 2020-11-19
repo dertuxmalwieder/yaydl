@@ -19,12 +19,12 @@
 use anyhow::Result;
 use clap::{App, Arg};
 use indicatif::{ProgressBar, ProgressStyle};
-use reqwest::{blocking::Client, header, Url};
 use std::{
     fs,
     io::{self, copy, Read},
     path::{Path, PathBuf},
 };
+use url::Url;
 
 mod definitions;
 mod ffmpeg;
@@ -46,17 +46,14 @@ impl<R: Read> Read for DownloadProgress<R> {
 
 fn download(url: &str, filename: &str) -> Result<()> {
     let url = Url::parse(url)?;
-    let client = Client::new();
+    let resp = ureq::get(url.as_str()).call();
 
     // Find the video size:
     let total_size = {
-        let resp = client.head(url.as_str()).send()?;
-        if resp.status().is_success() {
-            resp.headers()
-                .get(header::CONTENT_LENGTH)
-                .and_then(|ct_len| ct_len.to_str().ok())
-                .and_then(|ct_len| ct_len.parse().ok())
-                .unwrap_or(0)
+        if resp.ok() {
+            resp.header("Content-Length")
+                .unwrap_or("0")
+                .parse::<u64>()?
         } else {
             return Err(anyhow::Error::msg(format!(
                 "Couldn't download URL: {}. Error: {:?}",
@@ -66,7 +63,7 @@ fn download(url: &str, filename: &str) -> Result<()> {
         }
     };
 
-    let mut request = client.get(url.as_str());
+    let mut request = ureq::get(url.as_str());
 
     // Display a progress bar:
     let pb = ProgressBar::new(total_size);
@@ -79,13 +76,15 @@ fn download(url: &str, filename: &str) -> Result<()> {
     if file.exists() {
         // Continue the file:
         let size = file.metadata()?.len() - 1;
-        request = request.header(header::RANGE, format!("bytes={}-", size));
+        // Override the range:
+        request = ureq::get(url.as_str()).set("Range", &format!("bytes={}-", size)).to_owned();
         pb.inc(size);
     }
 
+    let resp = request.call();
     let mut source = DownloadProgress {
         progress_bar: pb,
-        inner: request.send()?,
+        inner: resp.into_reader(),
     };
 
     let mut dest = fs::OpenOptions::new()

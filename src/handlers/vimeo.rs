@@ -30,7 +30,8 @@ unsafe fn get_video_info(url: &str) -> Result<Value> {
         // We need to fetch the video information first.
         // Those are hidden behing a config file defined in the page source code.
         // Search for: window.vimeo.clip_page_config.player = {"config_url":"(.+?)"
-        let body = reqwest::blocking::get(url)?.text()?;
+        let req = ureq::get(url).call();
+        let body = req.into_string()?;
         let re =
             Regex::new("window.vimeo.clip_page_config.player = .\"config_url\":\"(?P<URL>.+?)\"")
                 .unwrap();
@@ -53,7 +54,8 @@ unsafe fn get_video_info(url: &str) -> Result<Value> {
 
         // The "config_url" body is a JSON structure.
         // Grab and store it:
-        let config_body = reqwest::blocking::get(&video_info_url)?.text()?;
+        let config_req = ureq::get(&video_info_url).call();
+        let config_body = config_req.into_string()?;
         VIDEO_INFO = config_body;
     }
 
