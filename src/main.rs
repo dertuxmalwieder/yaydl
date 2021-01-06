@@ -173,7 +173,7 @@ fn main() -> Result<()> {
                     // Now let's download it:
                     let mut targetfile = format!(
                         "{}.{}",
-                        vt.replace(&['|', '\'', '\"', ':', '\'', '\\', '/'][..], r#""#),
+                        vt.trim().replace(&['|', '\'', '\"', ':', '\'', '\\', '/'][..], r#""#),
                         ext
                     );
 

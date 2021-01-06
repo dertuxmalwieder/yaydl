@@ -17,6 +17,7 @@
 // - handlers.rs file -
 
 mod vimeo;
+mod voe;
 mod youtube;
 
 // Add your own modules here.

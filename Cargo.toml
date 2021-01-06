@@ -1,13 +1,13 @@
 [package]
 name = "yaydl"
 description = "yet another youtube (and more) down loader"
-version = "0.2.6"
+version = "0.3.0"
 authors = ["Cthulhux <git@tuxproject.de>"]
 edition = "2018"
 license = "CDDL-1.0"
 repository = "https://code.rosaelefanten.org/yaydl"
 categories = ["command-line-utilities"]
-keywords = ["youtube", "vimeo"]
+keywords = ["youtube", "vimeo", "voe"]
 
 [dependencies]
 anyhow = "1.0"
@@ -15,7 +15,8 @@ clap = "3.0.0-beta.2"
 indicatif = "0.15.0"
 inventory = "0.1.9"
 qstring = "0.7.2"
-regex = "1.4.1"
+regex = "1.4.2"
+scraper = "0.12.0"
 serde_json = "1.0"
 ureq = { version = "1.5", default_features = false, features = ["native-tls"] }
 url = "2.2.0"
