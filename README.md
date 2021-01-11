@@ -62,7 +62,17 @@ Install Rust (e.g. with [rustup](https://rustup.rs)), then:
 
 ### From your package manager
 
-Nobody has provided any packages for `yaydl` yet. You can help!
+`pkgsrc` (with `pkg_add`):
+
+    % pkg_add yaydl
+
+`pkgsrc` (with `pkgin`):
+
+    % pkgin install yaydl
+
+Other package managers:
+
+* Nobody has provided any other packages for `yaydl` yet. You can help!
 
 ## How to contribute code
 
