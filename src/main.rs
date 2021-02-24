@@ -77,7 +77,9 @@ fn download(url: &str, filename: &str) -> Result<()> {
         // Continue the file:
         let size = file.metadata()?.len() - 1;
         // Override the range:
-        request = ureq::get(url.as_str()).set("Range", &format!("bytes={}-", size)).to_owned();
+        request = ureq::get(url.as_str())
+            .set("Range", &format!("bytes={}-", size))
+            .to_owned();
         pb.inc(size);
     }
 
@@ -155,9 +157,14 @@ fn main() -> Result<()> {
                     println!("The requested video was found. Processing...");
                 }
 
-                let vt = handler.find_video_title(in_url)?;
+                let video_title = handler.find_video_title(in_url);
+                let vt = match video_title {
+                    Err(_e) => "".to_string(),
+                    Ok(title) => title,
+                };
 
                 // Usually, we already find errors here.
+
                 if vt.is_empty() {
                     println!("The video title could not be extracted. Invalid link?");
                 } else {
@@ -173,7 +180,8 @@ fn main() -> Result<()> {
                     // Now let's download it:
                     let mut targetfile = format!(
                         "{}.{}",
-                        vt.trim().replace(&['|', '\'', '\"', ':', '\'', '\\', '/'][..], r#""#),
+                        vt.trim()
+                            .replace(&['|', '\'', '\"', ':', '\'', '\\', '/'][..], r#""#),
                         ext
                     );
 

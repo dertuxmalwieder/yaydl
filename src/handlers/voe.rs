@@ -18,7 +18,7 @@
 
 use crate::definitions::SiteDefinition;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use regex::Regex;
 use scraper::{Html, Selector};
 
@@ -51,9 +51,12 @@ impl SiteDefinition for VoeHandler {
             let video_info = get_video_info(url)?;
 
             let h1_selector = Selector::parse("h1.mt-1").unwrap();
-            let text = video_info.select(&h1_selector).next().unwrap();
+            let text = video_info.select(&h1_selector).next();
 
-            let result = text.text().collect();
+            let result = match text {
+                Some(txt) => txt.text().collect(),
+                None => return Err(anyhow!("Erroneous video site - maybe embed-only?")),
+            };
 
             Ok(result)
         }

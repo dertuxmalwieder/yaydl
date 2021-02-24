@@ -136,7 +136,8 @@ impl SiteDefinition for YouTubeHandler {
                     || !onlyaudio && itag["mimeType"].to_string().contains("video/"))
                     && (!onlyaudio || itag["quality"] != json!(null))
                     && itag["audioQuality"] != json!(null)
-                    && (onlyaudio && this_vq.is_empty() || !onlyaudio && last_vq.is_empty() && !this_vq.is_empty())
+                    && (onlyaudio && this_vq.is_empty()
+                        || !onlyaudio && last_vq.is_empty() && !this_vq.is_empty())
                     || is_better_quality
                 {
                     VIDEO_MIME = itag["mimeType"].to_string();
