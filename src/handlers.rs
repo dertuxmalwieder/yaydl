@@ -18,6 +18,7 @@
 
 mod vimeo;
 mod voe;
+mod watchmdh;
 mod youtube;
 
 // Add your own modules here.

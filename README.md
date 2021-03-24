@@ -22,6 +22,7 @@
 * YouTube.com
 * Vimeo.com
 * VOE.sx
+* WatchMDH.to
 
 There is an easy way to add more supported sites, see below for details.
 
