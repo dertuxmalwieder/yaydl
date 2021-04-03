@@ -17,6 +17,7 @@
 // - handlers.rs file -
 
 mod vimeo;
+mod vivo;
 mod voe;
 mod watchmdh;
 mod youtube;

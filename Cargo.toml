@@ -1,16 +1,17 @@
 [package]
 name = "yaydl"
 description = "yet another youtube (and more) down loader"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Cthulhux <git@tuxproject.de>"]
 edition = "2018"
 license = "CDDL-1.0"
 repository = "https://code.rosaelefanten.org/yaydl"
 categories = ["command-line-utilities"]
-keywords = ["youtube", "vimeo", "voe"]
+keywords = ["youtube", "vimeo", "voe", "vivo", "watchmdh"]
 
 [dependencies]
 anyhow = "1.0"
+cienli = "0.1.1"
 clap = "3.0.0-beta.2"
 indicatif = "0.15"
 inventory = "0.1"

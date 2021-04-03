@@ -23,6 +23,7 @@
 * Vimeo.com
 * VOE.sx
 * WatchMDH.to
+* VIVO.sx
 
 There is an easy way to add more supported sites, see below for details.
 
