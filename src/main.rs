@@ -46,22 +46,13 @@ impl<R: Read> Read for DownloadProgress<R> {
 
 fn download(url: &str, filename: &str) -> Result<()> {
     let url = Url::parse(url)?;
-    let resp = ureq::get(url.as_str()).call();
+    let resp = ureq::get(url.as_str()).call()?;
 
     // Find the video size:
-    let total_size = {
-        if resp.ok() {
-            resp.header("Content-Length")
-                .unwrap_or("0")
-                .parse::<u64>()?
-        } else {
-            return Err(anyhow::Error::msg(format!(
-                "Couldn't download URL: {}. Error: {:?}",
-                url,
-                resp.status(),
-            )));
-        }
-    };
+    let total_size = resp
+        .header("Content-Length")
+        .unwrap_or("0")
+        .parse::<u64>()?;
 
     let mut request = ureq::get(url.as_str());
 
@@ -83,7 +74,7 @@ fn download(url: &str, filename: &str) -> Result<()> {
         pb.inc(size);
     }
 
-    let resp = request.call();
+    let resp = request.call()?;
     let mut source = DownloadProgress {
         progress_bar: pb,
         inner: resp.into_reader(),

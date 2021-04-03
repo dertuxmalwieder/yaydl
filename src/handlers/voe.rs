@@ -28,7 +28,7 @@ unsafe fn get_video_info(url: &str) -> Result<Html> {
     if VIDEO_INFO.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
-        let req = ureq::get(&url).call();
+        let req = ureq::get(&url).call()?;
         let body = req.into_string()?;
 
         VIDEO_INFO = body;

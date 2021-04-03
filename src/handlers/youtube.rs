@@ -34,7 +34,7 @@ unsafe fn get_video_info(id: &str) -> Result<Value> {
             "https://www.youtube.com/get_video_info?video_id={}&el=embedded&ps=default",
             id
         );
-        let req = ureq::get(&video_url).call();
+        let req = ureq::get(&video_url).call()?;
         let body = req.into_string()?;
 
         // Try to find the encoded JSON object in the response.

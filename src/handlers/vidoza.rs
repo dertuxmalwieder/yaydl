@@ -14,7 +14,7 @@
  */
 
 // Yet Another Youtube Down Loader
-// - WatchMDH handler -
+// - Vidoza handler -
 
 use crate::definitions::SiteDefinition;
 
@@ -40,21 +40,22 @@ unsafe fn get_video_info(url: &str) -> Result<Html> {
 }
 
 // Implement the site definition:
-struct WatchMDHHandler;
-impl SiteDefinition for WatchMDHHandler {
+struct VidozaHandler;
+impl SiteDefinition for VidozaHandler {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"watchmdh.to/.+").unwrap().is_match(url)
+        Regex::new(r"vidoza.net/.+").unwrap().is_match(url)
     }
 
     fn find_video_title<'a>(&'a self, url: &'a str) -> Result<String> {
         unsafe {
             let video_info = get_video_info(url)?;
 
-            let title_selector = Selector::parse(r#"meta[itemprop="name"]"#).unwrap();
-            let title_elem = video_info.select(&title_selector).next().unwrap();
-            let title_contents = title_elem.value().attr("content").unwrap();
+            // Currently, there only is one <H1> on Vidoza. Good for us.
+            let h1_selector = Selector::parse("h1").unwrap();
+            let text = video_info.select(&h1_selector).next().unwrap();
+            let result = text.text().collect();
 
-            Ok(title_contents.to_string())
+            Ok(result)
         }
     }
 
@@ -62,9 +63,9 @@ impl SiteDefinition for WatchMDHHandler {
         unsafe {
             let video_info = get_video_info(url)?;
 
-            let url_selector = Selector::parse(r#"meta[itemprop="contentURL"]"#).unwrap();
+            let url_selector = Selector::parse("source").unwrap();
             let url_elem = video_info.select(&url_selector).next().unwrap();
-            let url_contents = url_elem.value().attr("content").unwrap();
+            let url_contents = url_elem.value().attr("src").unwrap();
 
             Ok(url_contents.to_string())
         }
@@ -78,7 +79,7 @@ impl SiteDefinition for WatchMDHHandler {
     }
 
     fn display_name<'a>(&'a self) -> String {
-        "WatchMDH".to_string()
+        "Vidoza".to_string()
     }
 
     fn find_video_file_extension<'a>(&'a self, _url: &'a str, _onlyaudio: bool) -> Result<String> {
@@ -88,5 +89,5 @@ impl SiteDefinition for WatchMDHHandler {
 
 // Push the site definition to the list of known handlers:
 inventory::submit! {
-    &WatchMDHHandler as &dyn SiteDefinition
+    &VidozaHandler as &dyn SiteDefinition
 }

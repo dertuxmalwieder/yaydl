@@ -16,6 +16,7 @@
 // Yet Another Youtube Down Loader
 // - handlers.rs file -
 
+mod vidoza;
 mod vimeo;
 mod vivo;
 mod voe;
