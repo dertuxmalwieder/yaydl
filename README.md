@@ -49,8 +49,8 @@ Install Rust (e.g. with [rustup](https://rustup.rs)), then:
 
 **using Fossil:**
 
-    % fossil clone https://code.rosaelefanten.org/yaydl yaydl.fossil
-    % mkdir yaydl ; cd yaydl ; fossil open ../yaydl.fossil
+    % fossil clone https://code.rosaelefanten.org/yaydl
+    % cd yaydl
     % cargo build --release
 
 **using Git:**
