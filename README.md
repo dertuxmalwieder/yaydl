@@ -159,5 +159,5 @@ Thank you.
 ## Contact
 
 * Twitter: [@tux0r](https://twitter.com/tux0r)
-* IRC: `irc.freenode.net/yaydl`
+* IRC: `irc.oftc.net/yaydl`
 * Matrix: @Cthulhux:matrix.org
