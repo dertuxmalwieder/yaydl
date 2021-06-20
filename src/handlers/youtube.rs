@@ -35,9 +35,7 @@ unsafe fn get_video_info(id: &str) -> Result<Value> {
             "videoId": id,
             "context": {
                 "client": {
-                    "hl": "en",
-                    "gl": "US",
-                    "clientName": "ANDROID_EMBEDDED_PLAYER",
+                    "clientName": "ANDROID",
                     "clientVersion": "16.02"
                 }
             }
