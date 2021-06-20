@@ -31,8 +31,8 @@ unsafe fn get_video_info(id: &str) -> Result<Value> {
     if VIDEO_INFO.is_empty() {
         // We need to fetch the video information first.
         let video_url = format!(
-            "https://www.youtube.com/get_video_info?video_id={}&el=embedded&ps=default",
-            id
+            "https://www.youtube.com/get_video_info?video_id={}&eurl=https%3A%2F%2Fyoutube.googleapis.com%2Fv%2F{}&html5=1&c=TVHTML5&cver=6.20180913",
+            id, id
         );
         let req = ureq::get(&video_url).call()?;
         let body = req.into_string()?;
