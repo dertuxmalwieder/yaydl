@@ -179,8 +179,9 @@ impl SiteDefinition for YouTubeHandler {
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         unsafe {
             let video_info = get_video_info(id)?;
+            let video_info_is_playable = video_info["playabilityStatus"]["status"] == json!("OK");
             let video_info_has_details = video_info["videoDetails"] != json!(null);
-            Ok(video_info_has_details)
+            Ok(video_info_has_details && video_info_is_playable)
         }
     }
 
