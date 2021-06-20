@@ -30,18 +30,20 @@ static mut VIDEO_MIME: String = String::new();
 unsafe fn get_video_info(id: &str) -> Result<Value> {
     if VIDEO_INFO.is_empty() {
         // We need to fetch the video information first.
-        let video_url = format!(
-            "https://www.youtube.com/get_video_info?video_id={}&eurl=https%3A%2F%2Fyoutube.googleapis.com%2Fv%2F{}&html5=1&c=TVHTML5&cver=6.20180913",
-            id, id
-        );
-        let req = ureq::get(&video_url).call()?;
+        let video_url = "https://youtubei.googleapis.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
+        let req = ureq::post(&video_url).send_json(ureq::json!({
+            "videoId": id,
+            "context": {
+                "client": {
+                    "hl": "en",
+                    "gl": "US",
+                    "clientName": "ANDROID_EMBEDDED_PLAYER",
+                    "clientVersion": "16.02"
+                }
+            }
+        }))?;
         let body = req.into_string()?;
-
-        // Try to find the encoded JSON object in the response.
-        let qs = QString::from(body.as_str());
-        let json = qs.get("player_response").unwrap_or("");
-
-        VIDEO_INFO = json.replace("+", " ");
+        VIDEO_INFO = body;
     }
 
     // Return it:
