@@ -1,7 +1,7 @@
 [package]
 name = "yaydl"
 description = "yet another youtube (and more) down loader"
-version = "0.6.6"
+version = "0.6.7"
 authors = ["Cthulhux <git@tuxproject.de>"]
 edition = "2018"
 license = "CDDL-1.0"
@@ -15,7 +15,6 @@ cienli = "0.1"
 clap = "3.0.0-beta.2"
 indicatif = "0.15"
 inventory = "0.1"
-qstring = "0.7"
 regex = "1.4"
 scraper = "0.12"
 serde_json = "1.0"

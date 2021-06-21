@@ -19,10 +19,8 @@
 use crate::definitions::SiteDefinition;
 
 use anyhow::Result;
-use qstring::QString;
 use regex::Regex;
 use serde_json::{json, Value};
-use urlencoding::decode;
 
 static mut VIDEO_INFO: String = String::new();
 static mut VIDEO_MIME: String = String::new();
@@ -85,8 +83,6 @@ impl SiteDefinition for YouTubeHandler {
                 };
 
             let mut url_to_choose = "";
-            let mut url_decoded: String;
-            let mut cipher: QString;
 
             // Finding the least horrible combination of video and audio:
             let vq1 = "tiny";
@@ -141,22 +137,8 @@ impl SiteDefinition for YouTubeHandler {
                     || is_better_quality
                 {
                     VIDEO_MIME = itag["mimeType"].to_string();
-                    // Now here are two options: Either the URL is written directly in the itag
-                    // or YouTube hides it in a "signatureCipher" which we need to decode first.
-                    if itag["signatureCipher"] != json!(null) && itag["url"] == json!(null) {
-                        // Sigh.
-                        cipher = QString::from(itag["signatureCipher"].as_str().unwrap());
-                        url_decoded = match decode(cipher.get("url").unwrap()) {
-                            Ok(u) => u,
-                            _ => unreachable!(),
-                        };
+                    url_to_choose = itag["url"].as_str().unwrap();
 
-                        // We might need to append a descrambled signature to the download URL.
-                        // This is yet left to do.
-                        url_to_choose = &url_decoded;
-                    } else {
-                        url_to_choose = itag["url"].as_str().unwrap();
-                    }
                     last_vq = String::from(this_vq);
                     last_aq = String::from(this_aq);
                 }
