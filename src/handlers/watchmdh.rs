@@ -50,7 +50,7 @@ impl SiteDefinition for WatchMDHHandler {
         unsafe {
             let video_info = get_video_info(url)?;
 
-            let title_selector = Selector::parse(r#"meta[itemprop="name"]"#).unwrap();
+            let title_selector = Selector::parse(r#"meta[property="og:title"]"#).unwrap();
             let title_elem = video_info.select(&title_selector).next().unwrap();
             let title_contents = title_elem.value().attr("content").unwrap();
 
@@ -60,13 +60,38 @@ impl SiteDefinition for WatchMDHHandler {
 
     fn find_video_direct_url<'a>(&'a self, url: &'a str, _onlyaudio: bool) -> Result<String> {
         unsafe {
-            let video_info = get_video_info(url)?;
+            // Find the best video format and the rnd value:
+            let re_rnd = Regex::new(r"rnd: '(\d+)'").unwrap();
+            let rnd = re_rnd
+                .captures(&VIDEO_INFO)
+                .unwrap()
+                .get(1)
+                .unwrap()
+                .as_str();
 
-            let url_selector = Selector::parse(r#"meta[itemprop="contentURL"]"#).unwrap();
-            let url_elem = video_info.select(&url_selector).next().unwrap();
-            let url_contents = url_elem.value().attr("content").unwrap();
+            let re_vid1 = Regex::new("video_alt_url: 'function/0/(.+?)',").unwrap();
+            let re_vid2 = Regex::new("video_url: 'function/0/(.+?)',").unwrap();
 
-            Ok(url_contents.to_string())
+            let url_contents;
+
+            if re_vid1.is_match(&VIDEO_INFO) {
+                url_contents = re_vid1
+                    .captures(&VIDEO_INFO)
+                    .unwrap()
+                    .get(1)
+                    .unwrap()
+                    .as_str();
+            } else {
+                url_contents = re_vid2
+                    .captures(&VIDEO_INFO)
+                    .unwrap()
+                    .get(1)
+                    .unwrap()
+                    .as_str();
+            }
+
+            // TODO: WatchMDH has added hash encryption to their URLs. Fix...
+            Ok(String::from(url_contents) + "?rnd=" + rnd)
         }
     }
 
