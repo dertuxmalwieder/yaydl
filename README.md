@@ -160,4 +160,4 @@ Thank you.
 
 * Twitter: [@tux0r](https://twitter.com/tux0r)
 * IRC: `irc.oftc.net/yaydl`
-* Matrix: @Cthulhux:matrix.org
+* Matrix: @tux0r:matrix.org
