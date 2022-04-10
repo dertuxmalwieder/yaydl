@@ -17,7 +17,7 @@
 // - main.rs file -
 
 use anyhow::Result;
-use clap::{App, Arg};
+use clap::{Arg, Command};
 use indicatif::{ProgressBar, ProgressStyle};
 use std::{
     fs,
@@ -93,31 +93,35 @@ fn download(url: &str, filename: &str) -> Result<()> {
 fn main() -> Result<()> {
     // Argument parsing:
     const VERSION: &str = env!("CARGO_PKG_VERSION");
-    let args = App::new("yaydl")
+    let args = Command::new("yaydl")
         .version(VERSION)
         .about("Yet Another Youtube Down Loader")
         .arg(Arg::new("onlyaudio")
-             .about("Only keeps the audio stream")
+             .help("Only keeps the audio stream")
              .short('x')
              .long("only-audio"))
+        .arg(Arg::new("keeptempfile")
+		     .help("Keeps all downloaded data even with --only-audio")
+		     .short('k')
+		     .long("keep-temp-file"))
         .arg(Arg::new("verbose")
-             .about("Talks more while the URL is processed")
+             .help("Talks more while the URL is processed")
              .short('v')
              .long("verbose"))
         .arg(Arg::new("audioformat")
-             .about("Sets the target audio format (only if --only-audio is used).\nSpecify the file extension here (defaults to \"mp3\").")
+             .help("Sets the target audio format (only if --only-audio is used).\nSpecify the file extension here (defaults to \"mp3\").")
              .short('f')
              .long("audio-format")
              .takes_value(true)
              .value_name("AUDIO"))
         .arg(Arg::new("outputfile")
-             .about("Sets the output file name")
+             .help("Sets the output file name")
              .short('o')
              .long("output")
              .takes_value(true)
              .value_name("OUTPUTFILE"))
         .arg(Arg::new("URL")
-             .about("Sets the input URL to use")
+             .help("Sets the input URL to use")
              .required(true)
              .index(1))
         .get_matches();
@@ -205,7 +209,9 @@ fn main() -> Result<()> {
                         ffmpeg::to_audio(inpath, outpath);
 
                         // Get rid of the evidence.
-                        fs::remove_file(&targetfile)?;
+                        if !args.is_present("keeptempfile") {
+                            fs::remove_file(&targetfile)?;
+                        }
 
                         // Success!
                         println!(
