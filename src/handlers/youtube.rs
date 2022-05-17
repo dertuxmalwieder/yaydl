@@ -51,13 +51,13 @@ unsafe fn get_video_info(id: &str) -> Result<Value> {
 struct YouTubeHandler;
 impl SiteDefinition for YouTubeHandler {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"(?:www\.)?youtu(?:be.com|be)/")
+        Regex::new(r"(?:www\.)?youtu(?:be\.com|\.be)/")
             .unwrap()
             .is_match(url)
     }
 
     fn find_video_title<'a>(&'a self, url: &'a str) -> Result<String> {
-        let id_regex = Regex::new(r"(?:v=|.be/)(.*$)").unwrap();
+        let id_regex = Regex::new(r"(?:v=|\.be/)(.*$)").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         unsafe {
             let video_info = get_video_info(id)?;
@@ -68,7 +68,7 @@ impl SiteDefinition for YouTubeHandler {
     }
 
     fn find_video_direct_url<'a>(&'a self, url: &'a str, onlyaudio: bool) -> Result<String> {
-        let id_regex = Regex::new(r"(?:v=|.be/)(.*$)").unwrap();
+        let id_regex = Regex::new(r"(?:v=|\.be/)(.*$)").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         unsafe {
             let video_info = get_video_info(id)?;
@@ -155,7 +155,7 @@ impl SiteDefinition for YouTubeHandler {
     }
 
     fn does_video_exist<'a>(&'a self, url: &'a str) -> Result<bool> {
-        let id_regex = Regex::new(r"(?:v=|.be/)(.*$)").unwrap();
+        let id_regex = Regex::new(r"(?:v=|\.be/)(.*$)").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         unsafe {
             let video_info = get_video_info(id)?;
