@@ -20,6 +20,7 @@
 ## Currently supported sites
 
 * YouTube.com
+* PornDoe.com
 * Vimeo.com
 * VOE.sx
 * WatchMDH.to
