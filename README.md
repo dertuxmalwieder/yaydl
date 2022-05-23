@@ -22,7 +22,7 @@
 * YouTube.com
 * Vimeo.com
 * VOE.sx
-* WatchMDH.to (broken as of Oct 2021; you can help!)
+* WatchMDH.to
 * VIVO.sx
 * Vidoza.net
 
