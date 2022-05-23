@@ -48,7 +48,7 @@ impl SiteDefinition for VivoHandler {
         Regex::new(r"vivo.sx/.+").unwrap().is_match(url)
     }
 
-    fn find_video_title<'a>(&'a self, url: &'a str) -> Result<String> {
+    fn find_video_title<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<String> {
         unsafe {
             let video_info = get_video_info(url)?;
 
@@ -60,7 +60,12 @@ impl SiteDefinition for VivoHandler {
         }
     }
 
-    fn find_video_direct_url<'a>(&'a self, _url: &'a str, _onlyaudio: bool) -> Result<String> {
+    fn find_video_direct_url<'a>(
+        &'a self,
+        _url: &'a str,
+        _webdriver_port: u16,
+        _onlyaudio: bool,
+    ) -> Result<String> {
         // VIVO displays the stream URL only after executing JavaScript.
         // It is buried inside the source code and ROT47-encrypted. Bah... :-)
         unsafe {
@@ -80,7 +85,7 @@ impl SiteDefinition for VivoHandler {
         }
     }
 
-    fn does_video_exist<'a>(&'a self, url: &'a str) -> Result<bool> {
+    fn does_video_exist<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<bool> {
         unsafe {
             let _video_info = get_video_info(url);
             Ok(!VIDEO_INFO.is_empty())
@@ -91,8 +96,17 @@ impl SiteDefinition for VivoHandler {
         "VIVO".to_string()
     }
 
-    fn find_video_file_extension<'a>(&'a self, _url: &'a str, _onlyaudio: bool) -> Result<String> {
+    fn find_video_file_extension<'a>(
+        &'a self,
+        _url: &'a str,
+        _webdriver_port: u16,
+        _onlyaudio: bool,
+    ) -> Result<String> {
         Ok("mp4".to_string())
+    }
+
+    fn web_driver_required<'a>(&'a self) -> bool {
+        false
     }
 }
 

@@ -19,19 +19,36 @@
 use crate::definitions::SiteDefinition;
 
 use anyhow::Result;
+use fantoccini::ClientBuilder;
 use regex::Regex;
 use scraper::{Html, Selector};
+use tokio::runtime;
 
 static mut VIDEO_INFO: String = String::new();
 
-unsafe fn get_video_info(url: &str) -> Result<Html> {
+unsafe fn get_video_info(url: &str, webdriver_port: u16) -> Result<Html> {
     if VIDEO_INFO.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
-        let req = ureq::get(&url).call()?;
-        let body = req.into_string()?;
+        let local_url = url.to_owned();
 
-        VIDEO_INFO = body;
+        let rt = runtime::Builder::new_current_thread()
+            .enable_time()
+            .enable_io()
+            .build()
+            .unwrap();
+        rt.block_on(async move {
+            let webdriver_url = format!("http://localhost:{}", webdriver_port);
+            let c = ClientBuilder::native()
+                .connect(&webdriver_url)
+                .await
+                .expect("failed to connect to web driver");
+            c.goto(&local_url).await;
+            let body = c.source().await;
+            c.close_window().await;
+
+            VIDEO_INFO = body.unwrap();
+        });
     }
 
     // Return it:
@@ -46,9 +63,9 @@ impl SiteDefinition for WatchMDHHandler {
         Regex::new(r"watchmdh.to/.+").unwrap().is_match(url)
     }
 
-    fn find_video_title<'a>(&'a self, url: &'a str) -> Result<String> {
+    fn find_video_title<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<String> {
         unsafe {
-            let video_info = get_video_info(url)?;
+            let video_info = get_video_info(url, webdriver_port)?;
 
             let title_selector = Selector::parse(r#"meta[property="og:title"]"#).unwrap();
             let title_elem = video_info.select(&title_selector).next().unwrap();
@@ -58,7 +75,12 @@ impl SiteDefinition for WatchMDHHandler {
         }
     }
 
-    fn find_video_direct_url<'a>(&'a self, url: &'a str, _onlyaudio: bool) -> Result<String> {
+    fn find_video_direct_url<'a>(
+        &'a self,
+        _url: &'a str,
+        _webdriver_port: u16,
+        _onlyaudio: bool,
+    ) -> Result<String> {
         unsafe {
             // Find the best video format and the rnd value:
             let re_rnd = Regex::new(r"rnd: '(\d+)'").unwrap();
@@ -90,14 +112,14 @@ impl SiteDefinition for WatchMDHHandler {
                     .as_str();
             }
 
-            // TODO: WatchMDH has added hash encryption to their URLs. Fix...
+            // TODO: WatchMDH has added hash encryption to their URLs. Use the web driver from fantoccini.
             Ok(String::from(url_contents) + "?rnd=" + rnd)
         }
     }
 
-    fn does_video_exist<'a>(&'a self, url: &'a str) -> Result<bool> {
+    fn does_video_exist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool> {
         unsafe {
-            let _video_info = get_video_info(url);
+            let _video_info = get_video_info(url, webdriver_port);
             Ok(!VIDEO_INFO.is_empty())
         }
     }
@@ -106,8 +128,17 @@ impl SiteDefinition for WatchMDHHandler {
         "WatchMDH".to_string()
     }
 
-    fn find_video_file_extension<'a>(&'a self, _url: &'a str, _onlyaudio: bool) -> Result<String> {
+    fn find_video_file_extension<'a>(
+        &'a self,
+        _url: &'a str,
+        _webdriver_port: u16,
+        _onlyaudio: bool,
+    ) -> Result<String> {
         Ok("mp4".to_string())
+    }
+
+    fn web_driver_required<'a>(&'a self) -> bool {
+        true
     }
 }
 

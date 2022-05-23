@@ -71,14 +71,19 @@ impl SiteDefinition for VimeoHandler {
         Regex::new(r"(?:www\.)?vimeo.com/.+").unwrap().is_match(url)
     }
 
-    fn find_video_title<'a>(&'a self, _url: &'a str) -> Result<String> {
+    fn find_video_title<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<String> {
         unsafe {
             let ret = &VIDEO_TITLE;
             Ok(ret.to_string())
         }
     }
 
-    fn find_video_direct_url<'a>(&'a self, url: &'a str, _onlyaudio: bool) -> Result<String> {
+    fn find_video_direct_url<'a>(
+        &'a self,
+        url: &'a str,
+        _webdriver_port: u16,
+        _onlyaudio: bool,
+    ) -> Result<String> {
         let id_regex = Regex::new(r"(?:vimeo.com/)(.*$)").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         unsafe {
@@ -105,7 +110,7 @@ impl SiteDefinition for VimeoHandler {
         }
     }
 
-    fn does_video_exist<'a>(&'a self, url: &'a str) -> Result<bool> {
+    fn does_video_exist<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<bool> {
         unsafe {
             let _video_info = get_video_info(url);
             Ok(!VIDEO_INFO.is_empty())
@@ -116,8 +121,17 @@ impl SiteDefinition for VimeoHandler {
         "Vimeo".to_string()
     }
 
-    fn find_video_file_extension<'a>(&'a self, _url: &'a str, _onlyaudio: bool) -> Result<String> {
+    fn find_video_file_extension<'a>(
+        &'a self,
+        _url: &'a str,
+        _webdriver_port: u16,
+        _onlyaudio: bool,
+    ) -> Result<String> {
         Ok("mp4".to_string())
+    }
+
+    fn web_driver_required<'a>(&'a self) -> bool {
+        false
     }
 }
 

@@ -77,7 +77,15 @@ Other package managers:
 
 * Nobody has provided any other packages for `yaydl` yet. You can help!
 
-## How to contribute code
+# How to use the web driver (very beta, at your own risk!)
+
+For some video sites, `yaydl` needs to be able to parse a JavaScript on them. For this, it needs to spawn a headless web browser. It requires Chrome or Firefox to be available on your system as of now.
+
+1. Install and run [ChromeDriver](https://chromedriver.chromium.org) or [geckodriver](https://github.com/mozilla/geckodriver/releases) for your platform.
+2. Tell `yaydl` that you have a web driver running: `yaydl --webdriver <port> ...`. (Both drivers use different defaults and options, please consult their command-line help.)
+3. In theory, it should be possible to use more sites with `yaydl` now. :-)
+
+# How to contribute code
 
 1. Read and agree to the [Code of ~~Conduct~~ Merit](CODE_OF_CONDUCT.md).
 2. Implicitly agree to the [LICENSE](LICENSE). Nobody reads those. I don't either.
@@ -104,35 +112,44 @@ use crate::definitions::SiteDefinition;
 
 struct NoopExampleHandler;
 impl SiteDefinition for NoopExampleHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
+    fn can_handle_url<'a>(&'a self, url: &'a str, webdriver_port: u16) -> bool {
         // Return true here, if <url> can be covered by this handler.
         // Note that yaydl will skip all other handlers then.
         true
     }
     
-    fn does_video_exist<'a>(&'a self, url: &'a str) -> Result<bool> {
+    fn does_video_exist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool> {
     	// Return true here, if the video exists.
-    	false
+        // The webdriver port can be 0 if it is not required.
+    	Ok(false)
     }
     
-    fn find_video_title<'a>(&'a self, url: &'a str) -> Result<String> {
+    fn find_video_title<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<String> {
         // Return the video title from <url> here.
+        // The webdriver port can be 0 if it is not required.
         Ok("".to_string())
     }
     
-    fn find_video_direct_url<'a>(&'a self, url: &'a str, onlyaudio: bool) -> Result<String> {
+    fn find_video_direct_url<'a>(&'a self, url: &'a str, webdriver_port: u16, onlyaudio: bool) -> Result<String> {
         // Return the direct download URL of the video (or its audio version) here.
+        // The webdriver port can be 0 if it is not required.
         Ok("".to_string())
     }
 
-    fn find_video_file_extension<'a>(&'a self, url: &'a str, onlyaudio: bool) -> Result<String> {
+    fn find_video_file_extension<'a>(&'a self, url: &'a str, webdriver_port: u16, onlyaudio: bool) -> Result<String> {
         // Return the designated file extension of the video (or audio) file here.
+        // The webdriver port can be 0 if it is not required.
         Ok("mp4".to_string())
     }
 
     fn display_name<'a>(&'a self) -> String {
         // For cosmetics, this is the display name of this handler.
         "NoopExample"
+    }
+    
+    fn web_driver_required<'a>(&'a self) -> bool {
+        // Return true here, if the implementation requires a web driver to be running.
+        false
     }
 }
    

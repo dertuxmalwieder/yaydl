@@ -24,17 +24,30 @@ pub trait SiteDefinition {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool;
 
     // true, if the video exists.
-    fn does_video_exist<'a>(&'a self, url: &'a str) -> Result<bool>;
+    fn does_video_exist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool>;
 
     // returns the title of a video.
-    fn find_video_title<'a>(&'a self, url: &'a str) -> Result<String>;
+    fn find_video_title<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<String>;
 
     // returns the download URL of a video.
-    fn find_video_direct_url<'a>(&'a self, url: &'a str, onlyaudio: bool) -> Result<String>;
+    fn find_video_direct_url<'a>(
+        &'a self,
+        url: &'a str,
+        webdriver_port: u16,
+        onlyaudio: bool,
+    ) -> Result<String>;
 
     // returns the file extension of the video (e.g. "mp4").
-    fn find_video_file_extension<'a>(&'a self, url: &'a str, onlyaudio: bool) -> Result<String>;
+    fn find_video_file_extension<'a>(
+        &'a self,
+        url: &'a str,
+        webdriver_port: u16,
+        onlyaudio: bool,
+    ) -> Result<String>;
 
     // returns the name of the site (e.g. "YouTube").
     fn display_name<'a>(&'a self) -> String;
+
+    // true, if this site needs a web driver.
+    fn web_driver_required<'a>(&'a self) -> bool;
 }

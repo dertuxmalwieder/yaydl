@@ -46,7 +46,7 @@ impl SiteDefinition for VoeHandler {
         Regex::new(r"(?:\.)?voe.sx/.+").unwrap().is_match(url)
     }
 
-    fn find_video_title<'a>(&'a self, url: &'a str) -> Result<String> {
+    fn find_video_title<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<String> {
         unsafe {
             let video_info = get_video_info(url)?;
 
@@ -62,7 +62,12 @@ impl SiteDefinition for VoeHandler {
         }
     }
 
-    fn find_video_direct_url<'a>(&'a self, url: &'a str, _onlyaudio: bool) -> Result<String> {
+    fn find_video_direct_url<'a>(
+        &'a self,
+        url: &'a str,
+        _webdriver_port: u16,
+        _onlyaudio: bool,
+    ) -> Result<String> {
         unsafe {
             let _video_info = get_video_info(url)?;
             let url_re = Regex::new("sources: ..src: '(?P<URL>.+?)'").unwrap();
@@ -73,7 +78,7 @@ impl SiteDefinition for VoeHandler {
         }
     }
 
-    fn does_video_exist<'a>(&'a self, url: &'a str) -> Result<bool> {
+    fn does_video_exist<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<bool> {
         unsafe {
             let _video_info = get_video_info(url);
             Ok(!VIDEO_INFO.is_empty())
@@ -84,8 +89,17 @@ impl SiteDefinition for VoeHandler {
         "Voe".to_string()
     }
 
-    fn find_video_file_extension<'a>(&'a self, _url: &'a str, _onlyaudio: bool) -> Result<String> {
+    fn find_video_file_extension<'a>(
+        &'a self,
+        _url: &'a str,
+        _webdriver_port: u16,
+        _onlyaudio: bool,
+    ) -> Result<String> {
         Ok("mp4".to_string())
+    }
+
+    fn web_driver_required<'a>(&'a self) -> bool {
+        false
     }
 }
 
