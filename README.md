@@ -19,13 +19,13 @@
 
 ## Currently supported sites
 
-* YouTube.com
 * PornDoe.com
+* Vidoza.net
 * Vimeo.com
+* VIVO.sx
 * VOE.sx
 * WatchMDH.to
-* VIVO.sx
-* Vidoza.net
+* YouTube.com
 
 There is an easy way to add more supported sites, see below for details.
 
@@ -80,10 +80,10 @@ Other package managers:
 
 # How to use the web driver (very beta, at your own risk!)
 
-For some video sites, `yaydl` needs to be able to parse a JavaScript on them. For this, it needs to spawn a headless web browser. It requires Chrome or Firefox to be available on your system as of now.
+For some video sites, `yaydl` needs to be able to parse a JavaScript on them. For this, it needs to spawn a headless web browser. It requires Google Chrome or Mozilla Firefox to be installed and running on your system as of now.
 
-1. Install and run [ChromeDriver](https://chromedriver.chromium.org) or [geckodriver](https://github.com/mozilla/geckodriver/releases) for your platform.
-2. Tell `yaydl` that you have a web driver running: `yaydl --webdriver <port> ...`. (Both drivers use different defaults and options, please consult their command-line help.)
+1. Install and run [ChromeDriver](https://chromedriver.chromium.org) (if you use Chrome) or [geckodriver](https://github.com/mozilla/geckodriver/releases) (if you use Firefox) for your platform.
+2. Tell `yaydl` that you have a web driver running: `yaydl --webdriver <port> <video URL>`. (Both drivers use different default ports, please consult their command-line help.)
 3. In theory, it should be possible to use more sites with `yaydl` now. :-)
 
 # How to contribute code
@@ -113,33 +113,35 @@ use crate::definitions::SiteDefinition;
 
 struct NoopExampleHandler;
 impl SiteDefinition for NoopExampleHandler {
+    // Parameters sent to the handler by yaydl:
+    // - url:            The video page's URL.
+    // - webdriver_port: The port that runs the WebDriver client.
+    //                   Defaults to 0 if there is no WebDriver configured.
+    // - onlyaudio:      true if only the audio part of the video should be
+    //                   kept, else false.
     fn can_handle_url<'a>(&'a self, url: &'a str, webdriver_port: u16) -> bool {
-        // Return true here, if <url> can be covered by this handler.
+        // Return true here if <url> can be covered by this handler.
         // Note that yaydl will skip all other handlers then.
         true
     }
     
     fn does_video_exist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool> {
     	// Return true here, if the video exists.
-        // The webdriver port can be 0 if it is not required.
     	Ok(false)
     }
     
     fn find_video_title<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<String> {
         // Return the video title from <url> here.
-        // The webdriver port can be 0 if it is not required.
         Ok("".to_string())
     }
     
     fn find_video_direct_url<'a>(&'a self, url: &'a str, webdriver_port: u16, onlyaudio: bool) -> Result<String> {
         // Return the direct download URL of the video (or its audio version) here.
-        // The webdriver port can be 0 if it is not required.
         Ok("".to_string())
     }
 
     fn find_video_file_extension<'a>(&'a self, url: &'a str, webdriver_port: u16, onlyaudio: bool) -> Result<String> {
         // Return the designated file extension of the video (or audio) file here.
-        // The webdriver port can be 0 if it is not required.
         Ok("mp4".to_string())
     }
 
