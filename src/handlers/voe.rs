@@ -46,6 +46,11 @@ impl SiteDefinition for VoeHandler {
         Regex::new(r"(?:\.)?voe.sx/.+").unwrap().is_match(url)
     }
 
+    fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
+        // TODO: Does VOE still have playlists?
+        Ok(false)
+    }
+
     fn find_video_title<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<String> {
         unsafe {
             let video_info = get_video_info(url)?;

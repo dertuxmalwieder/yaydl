@@ -22,6 +22,7 @@ mod vimeo;
 mod vivo;
 mod voe;
 mod watchmdh;
+mod xhamster;
 mod youtube;
 
 // Add your own modules here.

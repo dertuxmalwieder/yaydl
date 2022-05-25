@@ -56,6 +56,11 @@ impl SiteDefinition for YouTubeHandler {
             .is_match(url)
     }
 
+    fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
+        // YouTube has broken domains, but no playlists. :-)
+        Ok(false)
+    }
+
     fn find_video_title<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<String> {
         let id_regex = Regex::new(r"(?:v=|\.be/)(.*$)").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();

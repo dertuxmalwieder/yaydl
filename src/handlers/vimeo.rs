@@ -71,6 +71,11 @@ impl SiteDefinition for VimeoHandler {
         Regex::new(r"(?:www\.)?vimeo.com/.+").unwrap().is_match(url)
     }
 
+    fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
+        // Vimeo seems to have no playlists?
+        Ok(false)
+    }
+
     fn find_video_title<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<String> {
         unsafe {
             let ret = &VIDEO_TITLE;

@@ -14,18 +14,12 @@
 
 * Can download videos.
 * Can optionally keep only the audio part of them.
-* Could convert the resulting file to something else (requires `ffmpeg`).
+* Could convert the resulting file to something else (requires the `ffmpeg` binary).
 * Comes as a single binary (once compiled) - take it everywhere on your thumbdrive, no Python cruft required.
 
 ## Currently supported sites
 
-* PornDoe.com
-* Vidoza.net
-* Vimeo.com
-* VIVO.sx
-* VOE.sx
-* WatchMDH.to
-* YouTube.com
+* porndoe.com · vidoza.net · vimeo.com · vivo.sx · voe.sx · watchmdh.to · xhamster.com · youtube.com
 
 There is an easy way to add more supported sites, see below for details.
 
@@ -36,11 +30,6 @@ The list of features is deliberately kept short:
 * No output quality choice. `yaydl` assumes that you have a large hard drive and your internet connection is good enough, or else you would stream, not download.
 * No complex filters. This is a downloading tool.
 * No image file support. Videos only.
-
-## Missing features (patches are welcome)
-
-* `yaydl` currently ignores video meta data (except the title) unless they are a part of the video file.
-* Playlists are not supported yet.
 
 ## How to install
 
@@ -80,10 +69,11 @@ Other package managers:
 
 # How to use the web driver (very beta, at your own risk!)
 
-For some video sites, `yaydl` needs to be able to parse a JavaScript on them. For this, it needs to spawn a headless web browser. It requires Google Chrome or Mozilla Firefox to be installed and running on your system as of now.
+For some video sites, `yaydl` needs to be able to parse a JavaScript on them. For this, it needs to be able to spawn a headless web browser. It requires Google Chrome, Microsoft Edge or Mozilla Firefox to be installed and running on your system.
 
-1. Install and run [ChromeDriver](https://chromedriver.chromium.org) (if you use Chrome) or [geckodriver](https://github.com/mozilla/geckodriver/releases) (if you use Firefox) for your platform.
-2. Tell `yaydl` that you have a web driver running: `yaydl --webdriver <port> <video URL>`. (Both drivers use different default ports, please consult their command-line help.)
+1. Install and run [ChromeDriver](https://chromedriver.chromium.org) (if you use Chrome), the *typically* named [Microsoft Edge WebDriver](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/) (if you use Edge) or [geckodriver](https://github.com/mozilla/geckodriver/releases) (if you use Firefox) for your platform.
+2. Tell `yaydl` that you have a web driver running: `yaydl --webdriver <port> <video URL>`. (The drivers usually run on port 4444 or 9515, please consult their documentation if you are not sure.)
+   *Hint:* If you need this feature regularly, you can also use the environment variable `YAYDL_WEBDRIVER_PORT` to set the port number for all further requests.
 3. In theory, it should be possible to use more sites with `yaydl` now. :-)
 
 # How to contribute code
@@ -124,19 +114,25 @@ impl SiteDefinition for NoopExampleHandler {
         // Note that yaydl will skip all other handlers then.
         true
     }
-    
+
     fn does_video_exist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool> {
-    	// Return true here, if the video exists.
+        // Return true here, if the video exists.
+        Ok(false)
+    }
+
+    fn is_playlist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool> {
+    	// Return true here, if the download link is a playlist.
     	Ok(false)
     }
-    
+
     fn find_video_title<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<String> {
         // Return the video title from <url> here.
         Ok("".to_string())
     }
-    
+
     fn find_video_direct_url<'a>(&'a self, url: &'a str, webdriver_port: u16, onlyaudio: bool) -> Result<String> {
         // Return the direct download URL of the video (or its audio version) here.
+        // Exception: If is_playlist() is true, return the playlist URL here instead.
         Ok("".to_string())
     }
 
@@ -149,13 +145,13 @@ impl SiteDefinition for NoopExampleHandler {
         // For cosmetics, this is the display name of this handler.
         "NoopExample"
     }
-    
+
     fn web_driver_required<'a>(&'a self) -> bool {
         // Return true here, if the implementation requires a web driver to be running.
         false
     }
 }
-   
+
 // Push the site definition to the list of known handlers:
 inventory::submit! {
     &NoopExampleHandler as &dyn SiteDefinition
@@ -179,5 +175,6 @@ Thank you.
 ## Contact
 
 * Twitter: [@tux0r](https://twitter.com/tux0r)
+* Forum: [DonationCoder.com](https://www.donationcoder.com/forum/index.php?topic=50691.0)
 * IRC: `irc.oftc.net/yaydl`
 * Matrix: @tux0r:matrix.org

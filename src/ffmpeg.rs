@@ -31,5 +31,20 @@ pub fn to_audio(inputfile: &Path, outputfile: &Path) {
         .arg("quiet") // Shut the fuck up.
         .arg(outputfile)
         .output()
-        .expect("Could not find ffmpeg - no processing is done.");
+        .expect("Please install ffmpeg to convert the file into audio.");
+}
+
+pub fn ts_to_mp4(inputfile: &Path, outputfile: &Path) {
+    Command::new("ffmpeg")
+        .arg("-i")
+        .arg(inputfile)
+        .arg("-acodec")
+        .arg("copy")
+        .arg("-vcodec")
+        .arg("copy")
+        .arg("-loglevel")
+        .arg("quiet") // Shut the fuck up.
+        .arg(outputfile)
+        .output()
+        .expect("Please install ffmpeg to convert the file into MP4.");
 }

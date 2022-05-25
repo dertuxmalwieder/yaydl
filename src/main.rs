@@ -18,15 +18,14 @@
 
 use anyhow::Result;
 use clap::Parser;
-use indicatif::{ProgressBar, ProgressStyle};
 use std::{
-    fs,
-    io::{self, copy, Read},
+    env, fs,
     path::{Path, PathBuf},
+    str::FromStr,
 };
-use url::Url;
 
 mod definitions;
+mod download;
 mod ffmpeg;
 mod handlers;
 
@@ -64,66 +63,6 @@ struct Args {
     url: String,
 }
 
-struct DownloadProgress<R> {
-    inner: R,
-    progress_bar: ProgressBar,
-}
-
-impl<R: Read> Read for DownloadProgress<R> {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.inner.read(buf).map(|n| {
-            self.progress_bar.inc(n as u64);
-            n
-        })
-    }
-}
-
-fn download(url: &str, filename: &str) -> Result<()> {
-    let url = Url::parse(url)?;
-    let resp = ureq::get(url.as_str()).call()?;
-
-    // Find the video size:
-    let total_size = resp
-        .header("Content-Length")
-        .unwrap_or("0")
-        .parse::<u64>()?;
-
-    let mut request = ureq::get(url.as_str());
-
-    // Display a progress bar:
-    let pb = ProgressBar::new(total_size);
-    pb.set_style(ProgressStyle::default_bar()
-                 .template("{spinner:.green} [{elapsed_precise}] [{bar:40.green/blue}] {bytes}/{total_bytes} ({eta})")
-                 .progress_chars("#>-"));
-
-    let file = Path::new(filename);
-
-    if file.exists() {
-        // Continue the file:
-        let size = file.metadata()?.len() - 1;
-        // Override the range:
-        request = ureq::get(url.as_str())
-            .set("Range", &format!("bytes={}-", size))
-            .to_owned();
-        pb.inc(size);
-    }
-
-    let resp = request.call()?;
-    let mut source = DownloadProgress {
-        progress_bar: pb,
-        inner: resp.into_reader(),
-    };
-
-    let mut dest = fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&file)?;
-
-    let _ = copy(&mut source, &mut dest)?;
-
-    Ok(())
-}
-
 fn main() -> Result<()> {
     // Argument parsing:
     let args = Args::parse();
@@ -142,20 +81,28 @@ fn main() -> Result<()> {
             continue;
         }
 
-        if handler.web_driver_required() && args.webdriver.is_none() {
+        // This one is it.
+        site_def_found = true;
+        println!("Fetching from {}.", handler.display_name());
+
+        // The WebDriver port could be an argument from the command line
+        // or, to make life easier, from the environment variables
+        // ("YAYDL_WEBDRIVER_PORT") if not specified there. It defaults
+        // to 0.
+        let mut webdriverport: u16 = 0;
+        let webdriver_env = env::var("YAYDL_WEBDRIVER_PORT");
+        if args.webdriver.is_some() {
+            webdriverport = args.webdriver.unwrap();
+        } else if webdriver_env.is_ok() {
+            webdriverport = u16::from_str(&webdriver_env.unwrap_or("0".to_string())).unwrap_or(0);
+        }
+
+        if handler.web_driver_required() && webdriverport == 0 {
             // This handler would need a web driver, but none is supplied to yaydl.
             println!("{} requires a web driver installed and running as described in the README. Please tell yaydl which port to use (yaydl --webdriver <PORT>) and try again.", handler.display_name());
             continue;
         }
 
-        // This one is it.
-        site_def_found = true;
-        println!("Fetching from {}.", handler.display_name());
-
-        let mut webdriverport: u16 = 0;
-        if args.webdriver.is_some() {
-            webdriverport = args.webdriver.unwrap();
-        }
         let video_exists = handler.does_video_exist(in_url, webdriverport)?;
         if !video_exists {
             println!("The video could not be found. Invalid link?");
@@ -171,7 +118,6 @@ fn main() -> Result<()> {
             };
 
             // Usually, we already find errors here.
-
             if vt.is_empty() {
                 println!("The video title could not be extracted. Invalid link?");
             } else {
@@ -199,21 +145,37 @@ fn main() -> Result<()> {
                     println!("Starting the download.");
                 }
 
-                download(&url, &targetfile)?;
+                let mut force_ffmpeg = false;
+                if handler.is_playlist(in_url, webdriverport).unwrap_or(false) {
+                    // Multi-part download.
+                    download::download_from_playlist(&url, &targetfile, args.verbose)?;
+                    force_ffmpeg = true;
+                } else {
+                    // Single-file download.
+                    download::download(&url, &targetfile)?;
+                }
 
                 // Convert the file if needed.
                 let outputext = args.audioformat;
-                if args.onlyaudio && ext != outputext {
+                if args.onlyaudio && ext != outputext || force_ffmpeg {
                     if args.verbose {
                         println!("Post-processing.");
                     }
 
                     let inpath = Path::new(&targetfile);
                     let mut outpathbuf = PathBuf::from(&targetfile);
-                    outpathbuf.set_extension(outputext);
-                    let outpath = &outpathbuf.as_path();
 
-                    ffmpeg::to_audio(inpath, outpath);
+                    if args.onlyaudio {
+                        // Convert to audio-only:
+                        outpathbuf.set_extension(outputext);
+                        let outpath = &outpathbuf.as_path();
+                        ffmpeg::to_audio(inpath, outpath);
+                    } else {
+                        // Convert from .ts to .mp4:
+                        outpathbuf.set_extension("mp4");
+                        let outpath = &outpathbuf.as_path();
+                        ffmpeg::ts_to_mp4(inpath, outpath);
+                    }
 
                     // Get rid of the evidence.
                     if !args.keeptempfile {

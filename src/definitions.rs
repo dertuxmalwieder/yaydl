@@ -26,10 +26,13 @@ pub trait SiteDefinition {
     // true, if the video exists.
     fn does_video_exist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool>;
 
+    // true, if the URL is a playlist.
+    fn is_playlist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool>;
+
     // returns the title of a video.
     fn find_video_title<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<String>;
 
-    // returns the download URL of a video.
+    // returns the download URL of a video or playlist.
     fn find_video_direct_url<'a>(
         &'a self,
         url: &'a str,
