@@ -62,7 +62,7 @@ impl SiteDefinition for YouTubeHandler {
     }
 
     fn find_video_title<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<String> {
-        let id_regex = Regex::new(r"(?:v=|\.be/)(.*$)").unwrap();
+        let id_regex = Regex::new(r"(?:v=|\.be/)(.*?)(&.*)*$").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         unsafe {
             let video_info = get_video_info(id)?;
@@ -78,7 +78,7 @@ impl SiteDefinition for YouTubeHandler {
         _webdriver_port: u16,
         onlyaudio: bool,
     ) -> Result<String> {
-        let id_regex = Regex::new(r"(?:v=|\.be/)(.*$)").unwrap();
+        let id_regex = Regex::new(r"(?:v=|\.be/)(.*?)(&.*)*$").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         unsafe {
             let video_info = get_video_info(id)?;
@@ -165,7 +165,7 @@ impl SiteDefinition for YouTubeHandler {
     }
 
     fn does_video_exist<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<bool> {
-        let id_regex = Regex::new(r"(?:v=|\.be/)(.*$)").unwrap();
+        let id_regex = Regex::new(r"(?:v=|\.be\/)(.*?)(&.*)*$").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         unsafe {
             let video_info = get_video_info(id)?;
