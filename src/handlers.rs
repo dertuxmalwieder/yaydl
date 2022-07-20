@@ -26,3 +26,4 @@ mod xhamster;
 mod youtube;
 
 // Add your own modules here.
+mod spankbang;
