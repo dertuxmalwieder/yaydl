@@ -17,6 +17,7 @@
 // - handlers.rs file -
 
 mod porndoe;
+mod spankbang;
 mod vidoza;
 mod vimeo;
 mod vivo;
