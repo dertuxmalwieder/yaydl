@@ -18,23 +18,36 @@
 
 use anyhow::Result;
 
+use crate::VIDEO;
+
 // Define the public interface for site definitions:
 pub trait SiteDefinition {
     // true, if this site can handle <url>.
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool;
 
     // true, if the video exists.
-    fn does_video_exist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool>;
+    fn does_video_exist<'a>(
+        &'a self,
+        video: &'a mut VIDEO,
+        url: &'a str,
+        webdriver_port: u16,
+    ) -> Result<bool>;
 
     // true, if the URL is a playlist.
     fn is_playlist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool>;
 
     // returns the title of a video.
-    fn find_video_title<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<String>;
+    fn find_video_title<'a>(
+        &'a self,
+        video: &'a mut VIDEO,
+        url: &'a str,
+        webdriver_port: u16,
+    ) -> Result<String>;
 
     // returns the download URL of a video or playlist.
     fn find_video_direct_url<'a>(
         &'a self,
+        video: &'a mut VIDEO,
         url: &'a str,
         webdriver_port: u16,
         onlyaudio: bool,
@@ -43,6 +56,7 @@ pub trait SiteDefinition {
     // returns the file extension of the video (e.g. "mp4").
     fn find_video_file_extension<'a>(
         &'a self,
+        video: &'a mut VIDEO,
         url: &'a str,
         webdriver_port: u16,
         onlyaudio: bool,

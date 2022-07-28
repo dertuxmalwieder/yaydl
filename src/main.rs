@@ -63,6 +63,16 @@ struct Args {
     url: String,
 }
 
+// #[derive(Debug)]
+// usage:
+// let v = VIDEO{info: String::new(), title:String::new(), mime:String::new()};
+// println!("{:#?}",v);
+pub struct VIDEO {
+    info: String,
+    title: String,
+    mime: String,
+}
+
 fn main() -> Result<()> {
     // Argument parsing:
     let args = Args::parse();
@@ -70,6 +80,12 @@ fn main() -> Result<()> {
     let in_url = &args.url;
     inventory::collect!(&'static dyn definitions::SiteDefinition);
     let mut site_def_found = false;
+
+    let mut video = VIDEO {
+        info: String::new(),
+        title: String::new(),
+        mime: String::new(),
+    };
 
     for handler in inventory::iter::<&dyn definitions::SiteDefinition> {
         // "15:15 And he found a pair of eyes, scanning the directories for files."
@@ -103,7 +119,7 @@ fn main() -> Result<()> {
             continue;
         }
 
-        let video_exists = handler.does_video_exist(in_url, webdriverport)?;
+        let video_exists = handler.does_video_exist(&mut video, in_url, webdriverport)?;
         if !video_exists {
             println!("The video could not be found. Invalid link?");
         } else {
@@ -111,7 +127,7 @@ fn main() -> Result<()> {
                 println!("The requested video was found. Processing...");
             }
 
-            let video_title = handler.find_video_title(in_url, webdriverport);
+            let video_title = handler.find_video_title(&mut video, in_url, webdriverport);
             let vt = match video_title {
                 Err(_e) => "".to_string(),
                 Ok(title) => title,
@@ -125,9 +141,18 @@ fn main() -> Result<()> {
                     println!("Title: {}", vt);
                 }
 
-                let url = handler.find_video_direct_url(in_url, webdriverport, args.onlyaudio)?;
-                let ext =
-                    handler.find_video_file_extension(in_url, webdriverport, args.onlyaudio)?;
+                let url = handler.find_video_direct_url(
+                    &mut video,
+                    in_url,
+                    webdriverport,
+                    args.onlyaudio,
+                )?;
+                let ext = handler.find_video_file_extension(
+                    &mut video,
+                    in_url,
+                    webdriverport,
+                    args.onlyaudio,
+                )?;
 
                 // Now let's download it:
                 let mut targetfile = format!(

@@ -24,20 +24,18 @@ use regex::Regex;
 use scraper::{Html, Selector};
 use urlencoding::decode;
 
-static mut VIDEO_INFO: String = String::new();
+use crate::VIDEO;
 
-unsafe fn get_video_info(url: &str) -> Result<Html> {
-    if VIDEO_INFO.is_empty() {
+fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
+    if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
         let req = ureq::get(&url).call()?;
         let body = req.into_string()?;
-
-        VIDEO_INFO = body;
+        video.info.push_str(body.as_str());
     }
 
-    // Return it:
-    let d = Html::parse_document(&VIDEO_INFO);
+    let d = Html::parse_document(&video.info);
     Ok(d)
 }
 
@@ -53,48 +51,53 @@ impl SiteDefinition for VivoHandler {
         Ok(false)
     }
 
-    fn find_video_title<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<String> {
-        unsafe {
-            let video_info = get_video_info(url)?;
+    fn find_video_title<'a>(
+        &'a self,
+        video: &'a mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<String> {
+        let video_info = get_video_info(video, url)?;
 
-            let title_selector = Selector::parse("div.stream-content").unwrap();
-            let title_elem = video_info.select(&title_selector).next().unwrap();
-            let title_contents = title_elem.value().attr("data-name").unwrap();
+        let title_selector = Selector::parse("div.stream-content").unwrap();
+        let title_elem = video_info.select(&title_selector).next().unwrap();
+        let title_contents = title_elem.value().attr("data-name").unwrap();
 
-            Ok(title_contents.to_string())
-        }
+        Ok(title_contents.to_string())
     }
 
     fn find_video_direct_url<'a>(
         &'a self,
+        video: &'a mut VIDEO,
         _url: &'a str,
         _webdriver_port: u16,
         _onlyaudio: bool,
     ) -> Result<String> {
         // VIVO displays the stream URL only after executing JavaScript.
         // It is buried inside the source code and ROT47-encrypted. Bah... :-)
-        unsafe {
-            let src_re = Regex::new("source: '(?P<SOURCE>.+?)',").unwrap();
-            let src_search = src_re.captures(&VIDEO_INFO).unwrap();
-            let video_src = src_search.name("SOURCE").map_or("", |t| t.as_str());
+        let src_re = Regex::new("source: '(?P<SOURCE>.+?)',").unwrap();
+        let src_search = src_re.captures(&video.info).unwrap();
+        let video_src = src_search.name("SOURCE").map_or("", |t| t.as_str());
 
-            // URL decoding:
-            let url_decoded = match decode(video_src) {
-                Ok(u) => u,
-                _ => unreachable!(),
-            };
+        // URL decoding:
+        let url_decoded = match decode(video_src) {
+            Ok(u) => u,
+            _ => unreachable!(),
+        };
 
-            // un-ROT47:
-            let unrotated = Rot::new(&url_decoded, RotType::Rot47);
-            Ok(unrotated.decipher().to_string())
-        }
+        // un-ROT47:
+        let unrotated = Rot::new(&url_decoded, RotType::Rot47);
+        Ok(unrotated.decipher().to_string())
     }
 
-    fn does_video_exist<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<bool> {
-        unsafe {
-            let _video_info = get_video_info(url);
-            Ok(!VIDEO_INFO.is_empty())
-        }
+    fn does_video_exist<'a>(
+        &'a self,
+        video: &'a mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<bool> {
+        let _video_info = get_video_info(video, url);
+        Ok(!video.info.is_empty())
     }
 
     fn display_name<'a>(&'a self) -> String {
@@ -103,6 +106,7 @@ impl SiteDefinition for VivoHandler {
 
     fn find_video_file_extension<'a>(
         &'a self,
+        _video: &'a mut VIDEO,
         _url: &'a str,
         _webdriver_port: u16,
         _onlyaudio: bool,

@@ -22,20 +22,20 @@ use anyhow::{anyhow, Result};
 use regex::Regex;
 use scraper::{Html, Selector};
 
-static mut VIDEO_INFO: String = String::new();
+use crate::VIDEO;
 
-unsafe fn get_video_info(url: &str) -> Result<Html> {
-    if VIDEO_INFO.is_empty() {
+fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
+    if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
         let req = ureq::get(&url).call()?;
         let body = req.into_string()?;
 
-        VIDEO_INFO = body;
+        video.info = body;
     }
 
     // Return it:
-    let d = Html::parse_document(&VIDEO_INFO);
+    let d = Html::parse_document(&video.info);
     Ok(d)
 }
 
@@ -51,43 +51,48 @@ impl SiteDefinition for VoeHandler {
         Ok(false)
     }
 
-    fn find_video_title<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<String> {
-        unsafe {
-            let video_info = get_video_info(url)?;
+    fn find_video_title<'a>(
+        &'a self,
+        video: &'a mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<String> {
+        let video_info = get_video_info(video, url)?;
 
-            let h1_selector = Selector::parse("h1.mt-1").unwrap();
-            let text = video_info.select(&h1_selector).next();
+        let h1_selector = Selector::parse("h1.mt-1").unwrap();
+        let text = video_info.select(&h1_selector).next();
 
-            let result = match text {
-                Some(txt) => txt.text().collect(),
-                None => return Err(anyhow!("Erroneous video site - maybe embed-only?")),
-            };
+        let result = match text {
+            Some(txt) => txt.text().collect(),
+            None => return Err(anyhow!("Erroneous video site - maybe embed-only?")),
+        };
 
-            Ok(result)
-        }
+        Ok(result)
     }
 
     fn find_video_direct_url<'a>(
         &'a self,
+        video: &'a mut VIDEO,
         url: &'a str,
         _webdriver_port: u16,
         _onlyaudio: bool,
     ) -> Result<String> {
-        unsafe {
-            let _video_info = get_video_info(url)?;
-            let url_re = Regex::new("sources: ..src: '(?P<URL>.+?)'").unwrap();
-            let url_search = url_re.captures(&VIDEO_INFO).unwrap();
-            let video_url = url_search.name("URL").map_or("", |u| u.as_str());
+        let _video_info = get_video_info(video, url)?;
+        let url_re = Regex::new("sources: ..src: '(?P<URL>.+?)'").unwrap();
+        let url_search = url_re.captures(&video.info).unwrap();
+        let video_url = url_search.name("URL").map_or("", |u| u.as_str());
 
-            Ok(video_url.to_string())
-        }
+        Ok(video_url.to_string())
     }
 
-    fn does_video_exist<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<bool> {
-        unsafe {
-            let _video_info = get_video_info(url);
-            Ok(!VIDEO_INFO.is_empty())
-        }
+    fn does_video_exist<'a>(
+        &'a self,
+        video: &'a mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<bool> {
+        let _video_info = get_video_info(video, url);
+        Ok(!video.info.is_empty())
     }
 
     fn display_name<'a>(&'a self) -> String {
@@ -96,6 +101,7 @@ impl SiteDefinition for VoeHandler {
 
     fn find_video_file_extension<'a>(
         &'a self,
+        _video: &'a mut VIDEO,
         _url: &'a str,
         _webdriver_port: u16,
         _onlyaudio: bool,

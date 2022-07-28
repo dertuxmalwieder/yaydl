@@ -24,10 +24,10 @@ use regex::Regex;
 use scraper::{Html, Selector};
 use tokio::runtime;
 
-static mut VIDEO_INFO: String = String::new();
+use crate::VIDEO;
 
-unsafe fn get_video_info(url: &str, webdriver_port: u16) -> Result<Html> {
-    if VIDEO_INFO.is_empty() {
+fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<bool> {
+    if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
         let local_url = url.to_owned();
@@ -56,15 +56,12 @@ unsafe fn get_video_info(url: &str, webdriver_port: u16) -> Result<Html> {
             .expect("could not dismiss the age gate");
 
             let body = c.source().await.expect("could not read the site source");
+            video.info.push_str(body.as_str());
             c.close_window().await.expect("could not close the window");
-
-            VIDEO_INFO = body;
         });
     }
 
-    // Return it:
-    let d = Html::parse_document(&VIDEO_INFO);
-    Ok(d)
+    Ok(true)
 }
 
 // Implement the site definition:
@@ -79,44 +76,51 @@ impl SiteDefinition for PornDoeHandler {
         Ok(false)
     }
 
-    fn find_video_title<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<String> {
-        unsafe {
-            let video_info = get_video_info(url, webdriver_port)?;
+    fn find_video_title<'a>(
+        &'a self,
+        video: &'a mut VIDEO,
+        url: &'a str,
+        webdriver_port: u16,
+    ) -> Result<String> {
+        let _not_used = get_video_info(video, url, webdriver_port)?;
+        let video_info_html = Html::parse_document(video.info.as_str());
 
-            let h1_selector = Selector::parse("h1.-heading").unwrap();
-            let text = video_info.select(&h1_selector).next();
+        let h1_selector = Selector::parse("h1.-heading").unwrap();
+        let text = video_info_html.select(&h1_selector).next();
 
-            let result = match text {
-                Some(txt) => txt.text().collect(),
-                None => return Err(anyhow!("Could not extract the video title.")),
-            };
+        let result = match text {
+            Some(txt) => txt.text().collect(),
+            None => return Err(anyhow!("Could not extract the video title.")),
+        };
 
-            Ok(result)
-        }
+        Ok(result)
     }
 
     fn find_video_direct_url<'a>(
         &'a self,
+        video: &'a mut VIDEO,
         url: &'a str,
         webdriver_port: u16,
         _onlyaudio: bool,
     ) -> Result<String> {
-        unsafe {
-            let video_info = get_video_info(url, webdriver_port)?;
+        let _not_used = get_video_info(video, url, webdriver_port)?;
+        let video_info_html = Html::parse_document(video.info.as_str());
 
-            let url_selector = Selector::parse(r#"meta[itemprop="contentUrl"]"#).unwrap();
-            let url_elem = video_info.select(&url_selector).next().unwrap();
-            let url_contents = url_elem.value().attr("content").unwrap();
+        let url_selector = Selector::parse(r#"meta[itemprop="contentUrl"]"#).unwrap();
+        let url_elem = video_info_html.select(&url_selector).next().unwrap();
+        let url_contents = url_elem.value().attr("content").unwrap();
 
-            Ok(url_contents.to_string())
-        }
+        Ok(url_contents.to_string())
     }
 
-    fn does_video_exist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool> {
-        unsafe {
-            let _video_info = get_video_info(url, webdriver_port);
-            Ok(!VIDEO_INFO.is_empty())
-        }
+    fn does_video_exist<'a>(
+        &'a self,
+        video: &'a mut VIDEO,
+        url: &'a str,
+        webdriver_port: u16,
+    ) -> Result<bool> {
+        let _not_used = get_video_info(video, url, webdriver_port);
+        Ok(!video.info.is_empty())
     }
 
     fn display_name<'a>(&'a self) -> String {
@@ -125,6 +129,7 @@ impl SiteDefinition for PornDoeHandler {
 
     fn find_video_file_extension<'a>(
         &'a self,
+        _video: &'a mut VIDEO,
         _url: &'a str,
         _webdriver_port: u16,
         _onlyaudio: bool,

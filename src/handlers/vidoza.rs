@@ -22,20 +22,20 @@ use anyhow::Result;
 use regex::Regex;
 use scraper::{Html, Selector};
 
-static mut VIDEO_INFO: String = String::new();
+use crate::VIDEO;
 
-unsafe fn get_video_info(url: &str) -> Result<Html> {
-    if VIDEO_INFO.is_empty() {
+fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
+    if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
         let req = ureq::get(&url).call()?;
         let body = req.into_string()?;
 
-        VIDEO_INFO = body;
+        video.info = body;
     }
 
     // Return it:
-    let d = Html::parse_document(&VIDEO_INFO);
+    let d = Html::parse_document(&video.info);
     Ok(d)
 }
 
@@ -51,41 +51,46 @@ impl SiteDefinition for VidozaHandler {
         Ok(false)
     }
 
-    fn find_video_title<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<String> {
-        unsafe {
-            let video_info = get_video_info(url)?;
+    fn find_video_title<'a>(
+        &'a self,
+        video: &'a mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<String> {
+        let video_info = get_video_info(video, url)?;
 
-            // Currently, there only is one <H1> on Vidoza. Good for us.
-            let h1_selector = Selector::parse("h1").unwrap();
-            let text = video_info.select(&h1_selector).next().unwrap();
-            let result = text.text().collect();
+        // Currently, there only is one <H1> on Vidoza. Good for us.
+        let h1_selector = Selector::parse("h1").unwrap();
+        let text = video_info.select(&h1_selector).next().unwrap();
+        let result = text.text().collect();
 
-            Ok(result)
-        }
+        Ok(result)
     }
 
     fn find_video_direct_url<'a>(
         &'a self,
+        video: &'a mut VIDEO,
         url: &'a str,
         _webdriver_port: u16,
         _onlyaudio: bool,
     ) -> Result<String> {
-        unsafe {
-            let video_info = get_video_info(url)?;
+        let video_info = get_video_info(video, url)?;
 
-            let url_selector = Selector::parse("source").unwrap();
-            let url_elem = video_info.select(&url_selector).next().unwrap();
-            let url_contents = url_elem.value().attr("src").unwrap();
+        let url_selector = Selector::parse("source").unwrap();
+        let url_elem = video_info.select(&url_selector).next().unwrap();
+        let url_contents = url_elem.value().attr("src").unwrap();
 
-            Ok(url_contents.to_string())
-        }
+        Ok(url_contents.to_string())
     }
 
-    fn does_video_exist<'a>(&'a self, url: &'a str, _webdriver_port: u16) -> Result<bool> {
-        unsafe {
-            let _video_info = get_video_info(url);
-            Ok(!VIDEO_INFO.is_empty())
-        }
+    fn does_video_exist<'a>(
+        &'a self,
+        video: &'a mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<bool> {
+        let _video_info = get_video_info(video, url);
+        Ok(!video.info.is_empty())
     }
 
     fn display_name<'a>(&'a self) -> String {
@@ -94,6 +99,7 @@ impl SiteDefinition for VidozaHandler {
 
     fn find_video_file_extension<'a>(
         &'a self,
+        _video: &'a mut VIDEO,
         _url: &'a str,
         _webdriver_port: u16,
         _onlyaudio: bool,
