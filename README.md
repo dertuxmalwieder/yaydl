@@ -99,7 +99,9 @@ If you do that well (and regularly) enough, I'll probably grant you commit acces
 // handlers/noop.rs
 
 use anyhow::Result;
+
 use crate::definitions::SiteDefinition;
+use crate::VIDEO;
 
 struct NoopExampleHandler;
 impl SiteDefinition for NoopExampleHandler {
@@ -115,7 +117,7 @@ impl SiteDefinition for NoopExampleHandler {
         true
     }
 
-    fn does_video_exist<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool> {
+    fn does_video_exist<'a>(&'a self, video: &'a mut VIDEO, url: &'a str, webdriver_port: u16) -> Result<bool> {
         // Return true here, if the video exists.
         Ok(false)
     }
@@ -125,18 +127,18 @@ impl SiteDefinition for NoopExampleHandler {
     	Ok(false)
     }
 
-    fn find_video_title<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<String> {
+    fn find_video_title<'a>(&'a self, video: &'a mut VIDEO, url: &'a str, webdriver_port: u16) -> Result<String> {
         // Return the video title from <url> here.
         Ok("".to_string())
     }
 
-    fn find_video_direct_url<'a>(&'a self, url: &'a str, webdriver_port: u16, onlyaudio: bool) -> Result<String> {
+    fn find_video_direct_url<'a>(&'a self, video: &'a mut VIDEO, url: &'a str, webdriver_port: u16, onlyaudio: bool) -> Result<String> {
         // Return the direct download URL of the video (or its audio version) here.
         // Exception: If is_playlist() is true, return the playlist URL here instead.
         Ok("".to_string())
     }
 
-    fn find_video_file_extension<'a>(&'a self, url: &'a str, webdriver_port: u16, onlyaudio: bool) -> Result<String> {
+    fn find_video_file_extension<'a>(&'a self, video: &'a mut VIDEO, url: &'a str, webdriver_port: u16, onlyaudio: bool) -> Result<String> {
         // Return the designated file extension of the video (or audio) file here.
         Ok("mp4".to_string())
     }
