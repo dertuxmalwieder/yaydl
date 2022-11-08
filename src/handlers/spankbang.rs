@@ -29,38 +29,27 @@
 use crate::definitions::SiteDefinition;
 
 use anyhow::Result;
-use fantoccini::ClientBuilder;
 use regex::Regex;
 use scraper::{Html, Selector};
-use tokio::runtime;
 use url::Url;
 
 use crate::VIDEO;
 
 const MAX_FILENAME_LENGTH: usize = 142; // filename is based on url path description string
 
-fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<bool> {
+fn get_video_info(video: &mut VIDEO, url: &str) -> Result<bool> {
     if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
         let local_url = url.to_owned();
-
-        let rt = runtime::Builder::new_current_thread()
-            .enable_time()
-            .enable_io()
-            .build()
-            .unwrap();
-        rt.block_on(async move {
-            let webdriver_url = format!("http://localhost:{}", webdriver_port);
-            let c = ClientBuilder::native()
-                .connect(&webdriver_url)
-                .await
-                .expect("failed to connect to web driver");
-            c.goto(&local_url).await.expect("could not go to the URL");
-            let body = c.source().await.expect("could not read the site source");
-            video.info.push_str(body.as_str());
-            c.close_window().await.expect("could not close the window");
-        });
+        video.info.push_str(
+            ureq::get(&local_url)
+                .call()
+                .expect("Could not go to the url")
+                .into_string()
+                .expect("Could not read the site source")
+                .as_str(),
+        );
     }
 
     Ok(true)
@@ -93,10 +82,10 @@ impl SiteDefinition for SpankbangHandler {
         &'a self,
         video: &'a mut VIDEO,
         url: &'a str,
-        webdriver_port: u16,
+        _webdriver_port: u16,
         _onlyaudio: bool,
     ) -> Result<String> {
-        let _not_used = get_video_info(video, url, webdriver_port);
+        let _not_used = get_video_info(video, url);
         let video_info_html = Html::parse_document(&video.info);
 
         let url_selector = Selector::parse(r#"source[type="video/mp4"]"#).unwrap();
@@ -110,9 +99,9 @@ impl SiteDefinition for SpankbangHandler {
         &'a self,
         video: &'a mut VIDEO,
         url: &'a str,
-        webdriver_port: u16,
+        _webdriver_port: u16,
     ) -> Result<bool> {
-        let _not_used = get_video_info(video, url, webdriver_port);
+        let _not_used = get_video_info(video, url);
         Ok(!video.info.is_empty())
     }
 
@@ -131,7 +120,7 @@ impl SiteDefinition for SpankbangHandler {
     }
 
     fn web_driver_required<'a>(&'a self) -> bool {
-        true
+        false
     }
 }
 
