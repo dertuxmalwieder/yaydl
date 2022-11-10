@@ -177,6 +177,6 @@ Thank you.
 ## Contact
 
 * Twitter: [@tux0r](https://twitter.com/tux0r)
+* Mastodon: [@tux0r@layer8.space](https://layer8.space/@tux0r)
 * Forum: [DonationCoder.com](https://www.donationcoder.com/forum/index.php?topic=50691.0)
 * IRC: `irc.oftc.net/yaydl`
-* Matrix: @tux0r:matrix.org
