@@ -47,9 +47,19 @@ pub fn download_from_playlist(url: &str, filename: &str, verbose: bool) -> Resul
     }
 
     let mut url = Url::parse(url)?;
-    let request = ureq::get(url.as_str());
-    let playlist_text = request.call()?.into_string()?;
+    let mut playlist_text = "".to_string();
+    let mut agent = ureq::agent();
 
+    if let Some(env_proxy) = env_proxy::for_url(&url).host_port() {
+        // Use a proxy:
+        let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+        agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+        let request = agent.get(url.as_str());
+        playlist_text = request.call()?.into_string()?;
+    } else {
+        let request = ureq::get(url.as_str());
+        playlist_text = request.call()?.into_string()?;
+    }
     if verbose {
         println!("{}", "Parsing ...");
     }
@@ -68,7 +78,6 @@ pub fn download_from_playlist(url: &str, filename: &str, verbose: bool) -> Resul
 
     // Display a progress bar:
     let total_cnt = playlist.1.segments.len() as u64;
-
     let pb = ProgressBar::new(total_cnt);
     pb.set_style(
         ProgressStyle::default_bar()
@@ -85,7 +94,7 @@ pub fn download_from_playlist(url: &str, filename: &str, verbose: bool) -> Resul
         //   result:        https://foo.bar/play/file1.ts
         url.path_segments_mut().unwrap().pop().push(&segment.uri);
 
-        let request = ureq::get(url.as_str());
+        let request = agent.get(url.as_str());
         let mut source = request.call()?.into_reader();
 
         // Note: As we opened the file for appending only,
@@ -103,7 +112,15 @@ pub fn download_from_playlist(url: &str, filename: &str, verbose: bool) -> Resul
 
 pub fn download(url: &str, filename: &str) -> Result<()> {
     let url = Url::parse(url)?;
-    let resp = ureq::get(url.as_str()).call()?;
+    let mut agent = ureq::agent();
+
+    if let Some(env_proxy) = env_proxy::for_url(&url).host_port() {
+        // Use a proxy:
+        let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+        agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+    }
+
+    let resp = agent.get(url.as_str()).call()?;
 
     // Find the video size:
     let total_size = resp
@@ -111,7 +128,7 @@ pub fn download(url: &str, filename: &str) -> Result<()> {
         .unwrap_or("0")
         .parse::<u64>()?;
 
-    let mut request = ureq::get(url.as_str());
+    let mut request = agent.get(url.as_str());
 
     // Display a progress bar:
     let pb = ProgressBar::new(total_size);

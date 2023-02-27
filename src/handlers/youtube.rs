@@ -66,7 +66,7 @@ impl SiteDefinition for YouTubeHandler {
         url: &'a str,
         _webdriver_port: u16,
     ) -> Result<String> {
-        let id_regex = Regex::new(r"(?:v=|\.be/)(.*?)(&.*)*$").unwrap();
+        let id_regex = Regex::new(r"(?:v=|\.be/|shorts/)(.*?)(&.*)*$").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         let video_info = get_video_info(video, id)?;
         let video_info_title = video_info["videoDetails"]["title"].as_str().unwrap_or("");
@@ -81,7 +81,7 @@ impl SiteDefinition for YouTubeHandler {
         _webdriver_port: u16,
         onlyaudio: bool,
     ) -> Result<String> {
-        let id_regex = Regex::new(r"(?:v=|\.be/)(.*?)(&.*)*$").unwrap();
+        let id_regex = Regex::new(r"(?:v=|\.be/|shorts/)(.*?)(&.*)*$").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         let video_info = get_video_info(video, id)?;
         let video_info_itags = match video_info["streamingData"]["formats"].as_array() {
@@ -171,7 +171,7 @@ impl SiteDefinition for YouTubeHandler {
         url: &'a str,
         _webdriver_port: u16,
     ) -> Result<bool> {
-        let id_regex = Regex::new(r"(?:v=|\.be/)(.*?)(&.*)*$").unwrap();
+        let id_regex = Regex::new(r"(?:v=|\.be/|shorts/)(.*?)(&.*)*$").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
         let video_info = get_video_info(video, id)?;
         let video_info_is_playable = video_info["playabilityStatus"]["status"] == json!("OK");
