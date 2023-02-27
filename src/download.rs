@@ -47,19 +47,17 @@ pub fn download_from_playlist(url: &str, filename: &str, verbose: bool) -> Resul
     }
 
     let mut url = Url::parse(url)?;
-    let mut playlist_text = "".to_string();
     let mut agent = ureq::agent();
 
     if let Some(env_proxy) = env_proxy::for_url(&url).host_port() {
         // Use a proxy:
         let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
         agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        let request = agent.get(url.as_str());
-        playlist_text = request.call()?.into_string()?;
-    } else {
-        let request = ureq::get(url.as_str());
-        playlist_text = request.call()?.into_string()?;
     }
+
+    let request = agent.get(url.as_str());
+    let playlist_text = request.call()?.into_string()?;
+
     if verbose {
         println!("{}", "Parsing ...");
     }
@@ -140,7 +138,8 @@ pub fn download(url: &str, filename: &str) -> Result<()> {
         // Continue the file:
         let size = file.metadata()?.len() - 1;
         // Override the range:
-        request = ureq::get(url.as_str())
+        request = agent
+            .get(url.as_str())
             .set("Range", &format!("bytes={}-", size))
             .to_owned();
         pb.inc(size);

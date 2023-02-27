@@ -31,9 +31,17 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<bool> {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
         let local_url = url.to_owned();
+        let mut agent = ureq::agent();
+
+        if let Some(env_proxy) = env_proxy::for_url(&url).host_port() {
+            // Use a proxy:
+            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+        }
 
         video.info.push_str(
-            ureq::get(&local_url)
+            agent
+                .get(&local_url)
                 .call()
                 .expect("Could not go to the url")
                 .into_string()
@@ -86,6 +94,13 @@ impl SiteDefinition for XHamsterHandler {
     ) -> Result<String> {
         let _not_used = get_video_info(video, url)?;
         let video_info_html = Html::parse_document(video.info.as_str());
+        let mut agent = ureq::agent();
+
+        if let Some(env_proxy) = env_proxy::for_url(&url).host_port() {
+            // Use a proxy:
+            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+        }
 
         // Find the playlist first:
         let url_selector = Selector::parse(r#"link[rel="preload"][as="fetch"]"#).unwrap();
@@ -93,7 +108,7 @@ impl SiteDefinition for XHamsterHandler {
         let url_contents = url_elem.value().attr("href").unwrap();
 
         let mut playlist_url = Url::parse(url_contents)?;
-        let request = ureq::get(playlist_url.as_str());
+        let request = agent.get(playlist_url.as_str());
         let playlist_text = request.call()?.into_string()?;
 
         // Parse the playlist:
