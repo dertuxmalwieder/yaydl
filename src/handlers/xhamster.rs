@@ -33,7 +33,8 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<bool> {
         let local_url = url.to_owned();
         let mut agent = ureq::agent();
 
-        if let Some(env_proxy) = env_proxy::for_url(&url).host_port() {
+	let url_p = Url::parse(url)?;
+        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
             // Use a proxy:
             let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
             agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
@@ -96,7 +97,8 @@ impl SiteDefinition for XHamsterHandler {
         let video_info_html = Html::parse_document(video.info.as_str());
         let mut agent = ureq::agent();
 
-        if let Some(env_proxy) = env_proxy::for_url(&url).host_port() {
+	let url_p = Url::parse(url)?;
+        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
             // Use a proxy:
             let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
             agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();

@@ -1967,7 +1967,7 @@ checksum = "447660ad36a13288b1db4d4248e857b510e8c3a225c822ba4fb748c0aafecffd"
 
 [[package]]
 name = "yaydl"
-version = "0.12.0"
+version = "0.12.1"
 dependencies = [
  "anyhow",
  "cienli",
