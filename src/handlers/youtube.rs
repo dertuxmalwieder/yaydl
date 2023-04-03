@@ -27,8 +27,16 @@ use crate::VIDEO;
 fn get_video_info(video: &mut VIDEO, id: &str) -> Result<Value> {
     if video.info.is_empty() {
         // We need to fetch the video information first.
+        let mut agent = ureq::agent();
+
+        if let Some(env_proxy) = env_proxy::for_url(&url).host_port() {
+            // Use a proxy:
+            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+        }
+        
         let video_url = "https://youtubei.googleapis.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
-        let req = ureq::post(&video_url).send_json(ureq::json!({
+        let req = agent::post(&video_url).send_json(ureq::json!({
             "videoId": id,
             "context": {
                 "client": {
