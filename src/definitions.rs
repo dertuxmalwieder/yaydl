@@ -21,7 +21,7 @@ use anyhow::Result;
 use crate::VIDEO;
 
 // Define the public interface for site definitions:
-pub trait SiteDefinition {
+pub trait SiteDefinition: Sync + Send {
     // true, if this site can handle <url>.
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool;
 

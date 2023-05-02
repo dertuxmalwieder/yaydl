@@ -78,9 +78,11 @@ pub fn download_from_playlist(url: &str, filename: &str, verbose: bool) -> Resul
     let total_cnt = playlist.1.segments.len() as u64;
     let pb = ProgressBar::new(total_cnt);
     pb.set_style(
-        ProgressStyle::default_bar()
-            .template("{spinner:.green} [{elapsed_precise}] [{bar:40.green/blue}] {percent}%")
-            .progress_chars("#>-"),
+        ProgressStyle::with_template(
+            "{spinner:.green} [{elapsed_precise}] [{bar:40.green/blue}] {percent}%",
+        )
+        .unwrap()
+        .progress_chars("#>-"),
     );
 
     for segment in &playlist.1.segments {
@@ -130,7 +132,13 @@ pub fn download(url: &str, filename: &str) -> Result<()> {
 
     // Display a progress bar:
     let pb = ProgressBar::new(total_size);
-    pb.set_style(ProgressStyle::default_bar().template("{spinner:.green} [{elapsed_precise}] [{bar:40.green/blue}] {bytes}/{total_bytes} ({eta})").progress_chars("#>-"));
+    pb.set_style(
+        ProgressStyle::with_template(
+            "{spinner:.green} [{elapsed_precise}] [{bar:40.green/blue}] {percent}%",
+        )
+        .unwrap()
+        .progress_chars("#>-"),
+    );
 
     let file = Path::new(filename);
 
