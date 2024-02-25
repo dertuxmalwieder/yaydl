@@ -22,6 +22,7 @@ mod vidoza;
 mod vimeo;
 mod vivo;
 mod voe;
+mod voe_catchall;
 mod watchmdh;
 mod xhamster;
 mod youtube;
