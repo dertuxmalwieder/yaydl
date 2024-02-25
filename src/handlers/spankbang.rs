@@ -143,7 +143,7 @@ fn url_filename(url: String) -> String {
     };
 
     // path = /12345/video/description+for+this+video
-    let vec: Vec<&str> = path.as_str().clone().split("/").map(|s| s).collect();
+    let vec: Vec<&str> = path.as_str().split("/").map(|s| s).collect();
     let id_5char = vec[1]; // = 12345
     let description = vec[3]; // use for base filename, = description+for+this+video
 
