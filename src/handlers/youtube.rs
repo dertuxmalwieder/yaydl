@@ -27,7 +27,7 @@ use scraper::{Html, Selector};
 // of YouTube. In no way am I interested in playing cat and mouse
 // against Google.
 
-const INVIDIOUS_INSTANCE: &str = "https://invidious.snopyta.org";
+const INVIDIOUS_INSTANCE: &str = "https://invidious.materialio.us";
 
 fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
     if video.info.is_empty() {
@@ -90,35 +90,17 @@ impl SiteDefinition for YouTubeHandler {
         let mut url_to_choose = "".to_string();
 
         // Find the least horrible format:
-        let vq1 = "tiny";
-        let vq2 = "small";
-        let vq3 = "medium";
-        let vq4 = "large";
-        let vq5 = "hd720";
-        let vq6 = "hd1080";
-        let mut last_vq = "".to_string();
-
         let quality_selector = Selector::parse(r#"source"#).unwrap();
         let quality_iter = video_info.select(&quality_selector);
+
+        let mut last_vq: String = String::new();
 
         for source in quality_iter {
             // The highest quality wins.
             let this_tag = source;
-            let this_vq = this_tag.value().attr("label").unwrap();
+            let this_vq = this_tag.value().attr("label").unwrap_or("");
 
-            let is_better_video = (last_vq.is_empty() && !this_vq.is_empty())
-                || (last_vq == vq1
-                    && (this_vq == vq2
-                        || this_vq == vq3
-                        || this_vq == vq4
-                        || this_vq == vq5
-                        || this_vq == vq6))
-                || (last_vq == vq2
-                    && (this_vq == vq3 || this_vq == vq4 || this_vq == vq5 || this_vq == vq6))
-                || (last_vq == vq3 && (this_vq == vq4 || this_vq == vq5 || this_vq == vq6))
-                || (last_vq == vq4 && (this_vq == vq5 || this_vq == vq6))
-                || (last_vq == vq5 && this_vq == vq6);
-            let is_same_or_better_video = (last_vq == this_vq) || is_better_video;
+            let is_same_or_better_video = this_vq != last_vq && last_vq != "medium";
 
             // Try to download the best file.
             if is_same_or_better_video {

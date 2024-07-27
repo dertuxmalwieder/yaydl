@@ -1,7 +1,7 @@
 [package]
 name = "yaydl"
 description = "yet another youtube (and more) down loader"
-version = "0.14.0"
+version = "0.14.1"
 authors = ["Cthulhux <git@tuxproject.de>"]
 edition = "2021"
 license = "CDDL-1.0"
@@ -14,16 +14,16 @@ anyhow = "1.0"
 cienli = "0.3"
 clap = { version = "4.5", features = ["derive"] }
 env_proxy = "0.4"
-fantoccini = "0.19"
+fantoccini = "0.21"
 indicatif = "0.17"
 inventory = "0.3"
 m3u8-rs = "6.0"
 nom = "7.1"
 regex = "1.10"
-scraper = "0.18"
+scraper = "0.19"
 serde_json = "1.0"
 tokio = { version = "1", features = ["rt"] }
-ureq = { version = "2.9", features = ["json", "socks-proxy"] }
+ureq = { version = "2.10", features = ["json", "socks-proxy"] }
 url = "2.5"
 urlencoding = "2.1"
 
