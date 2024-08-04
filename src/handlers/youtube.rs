@@ -22,12 +22,24 @@ use crate::VIDEO;
 use anyhow::Result;
 use regex::Regex;
 use scraper::{Html, Selector};
+use std::env;
 
 // Starting with yaydl 0.13.0, this handler uses Invidious instead
 // of YouTube. In no way am I interested in playing cat and mouse
 // against Google.
 
+// The environment variable YAYDL_INVIDIOUS_INSTANCE can be used to
+// define the instance to use, otherwise, yaydl defaults to this:
 const INVIDIOUS_INSTANCE: &str = "https://invidious.materialio.us";
+
+fn get_invidious_instance() -> String {
+    let invidious_env = env::var("YAYDL_INVIDIOUS_INSTANCE");
+    if invidious_env.is_ok() {
+        invidious_env.unwrap_or(INVIDIOUS_INSTANCE.to_string())
+    } else {
+        INVIDIOUS_INSTANCE.to_string()
+    }
+}
 
 fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
     if video.info.is_empty() {
@@ -37,7 +49,7 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
         let id_regex = Regex::new(r"(?:v=|\.be/|shorts/)(.*?)(&.*)*$").unwrap();
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
 
-        let invidious_url = format!("{}/watch?v={}", INVIDIOUS_INSTANCE, id);
+        let invidious_url = format!("{}/watch?v={}", get_invidious_instance(), id);
         let local_url = invidious_url.to_owned();
 
         let req = ureq::get(&local_url).call()?;
@@ -112,7 +124,7 @@ impl SiteDefinition for YouTubeHandler {
                 video.mime = mime_split.next().unwrap().to_string();
 
                 let relative_url = this_tag.value().attr("src").unwrap();
-                url_to_choose = format!("{}{}", INVIDIOUS_INSTANCE, relative_url);
+                url_to_choose = format!("{}{}", get_invidious_instance(), relative_url);
 
                 // Only update last_vq if it's the best format yet.
                 last_vq = String::from(this_vq);

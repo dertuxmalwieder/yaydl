@@ -76,6 +76,10 @@ For some video sites, `yaydl` needs to be able to parse a JavaScript on them. Fo
    *Hint:* If you need this feature regularly, you can also use the environment variable `YAYDL_WEBDRIVER_PORT` to set the port number for all further requests.
 3. In theory, it should be possible to use more sites with `yaydl` now. :-)
 
+# How to set the default Invidious instance
+
+For rather obvious reasons, including (but not limited to) the fact that Google tries to choke third-party clients, `yaydl` has been using Invidious as a wrapper since version 0.13.0. Now sometimes, the default instance hard-coded into `src/handlers/youtube.rs` *will* fail to work properly. You can use the environment variable `YAYDL_INVIDIOUS_INSTANCE` to change that: Just set it to the URI (including "https://") of [any other instance](https://docs.invidious.io/instances/).
+
 # How to contribute code
 
 1. Read and agree to the [Code of ~~Conduct~~ Merit](CODE_OF_CONDUCT.md).
