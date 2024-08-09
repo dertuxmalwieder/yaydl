@@ -19,7 +19,7 @@
 
 ## Currently supported sites
 
-* porndoe.com · spankbang.com · vidoza.net · vimeo.com · vivo.sx · voe.sx · watchmdh.to · xhamster.com · youtube.com
+* invidious (most of them) · porndoe.com · spankbang.com · vidoza.net · vimeo.com · vivo.sx · voe.sx · watchmdh.to · xhamster.com · youtube.com
 
 There is an easy way to add more supported sites, see below for details.
 

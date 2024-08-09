@@ -14,7 +14,7 @@
  */
 
 // Yet Another Youtube Down Loader
-// - YouTube handler -
+// - YouTube and Invidious handler -
 
 use crate::definitions::SiteDefinition;
 use crate::VIDEO;
@@ -23,6 +23,7 @@ use anyhow::Result;
 use regex::Regex;
 use scraper::{Html, Selector};
 use std::env;
+use url::Url;
 
 // Starting with yaydl 0.13.0, this handler uses Invidious instead
 // of YouTube. In no way am I interested in playing cat and mouse
@@ -30,7 +31,7 @@ use std::env;
 
 // The environment variable YAYDL_INVIDIOUS_INSTANCE can be used to
 // define the instance to use, otherwise, yaydl defaults to this:
-const INVIDIOUS_INSTANCE: &str = "https://invidious.materialio.us";
+const INVIDIOUS_INSTANCE: &str = "https://invidious.privacyredirect.com";
 
 fn get_invidious_instance() -> String {
     let invidious_env = env::var("YAYDL_INVIDIOUS_INSTANCE");
@@ -52,7 +53,17 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
         let invidious_url = format!("{}/watch?v={}", get_invidious_instance(), id);
         let local_url = invidious_url.to_owned();
 
-        let req = ureq::get(&local_url).call()?;
+        // Initialize the agent:
+        let mut agent = ureq::agent();
+        let url_p = Url::parse(&local_url)?;
+
+        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
+            // Use a proxy:
+            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+        }
+
+        let req = agent.get(&local_url).call()?;
         let body = req.into_string()?;
         video.info.push_str(body.as_str());
     }
@@ -65,7 +76,7 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 struct YouTubeHandler;
 impl SiteDefinition for YouTubeHandler {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"(?:www\.)?youtu(?:be\.com|\.be)/")
+        Regex::new(r"invidious\.|(?:www\.)?youtu(?:be\.com|\.be)/")
             .unwrap()
             .is_match(url)
     }
@@ -151,7 +162,7 @@ impl SiteDefinition for YouTubeHandler {
     }
 
     fn display_name<'a>(&'a self) -> String {
-        "YouTube".to_string()
+        "Invidious".to_string()
     }
 
     fn find_video_file_extension<'a>(

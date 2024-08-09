@@ -47,7 +47,7 @@ fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<b
                 .connect(&webdriver_url)
                 .await
                 .expect("failed to connect to web driver");
-            
+
             c.goto(&local_url)
                 .await
                 .expect("could not go to the site URL");
@@ -58,7 +58,7 @@ fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<b
                 vec![],
             )
             .await
-                .expect("could not load the video");
+            .expect("could not load the video");
 
             // Wait for a while:
             thread::sleep(time::Duration::from_secs(6));
@@ -76,7 +76,9 @@ fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<b
 struct VoeCatchallHandler;
 impl SiteDefinition for VoeCatchallHandler {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"(?:\.)?jayservicestuff.com/.+").unwrap().is_match(url)
+        Regex::new(r"(?:\.)?jayservicestuff.com/.+")
+            .unwrap()
+            .is_match(url)
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
@@ -121,7 +123,7 @@ impl SiteDefinition for VoeCatchallHandler {
 
         Ok(url_contents.to_string())
     }
-    
+
     fn does_video_exist<'a>(
         &'a self,
         video: &'a mut VIDEO,
