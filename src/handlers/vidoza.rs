@@ -43,7 +43,7 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 struct VidozaHandler;
 impl SiteDefinition for VidozaHandler {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"vidoza.net/.+").unwrap().is_match(url)
+        Regex::new(r"vid(oza|ezz).net/.+").unwrap().is_match(url)
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
@@ -61,8 +61,11 @@ impl SiteDefinition for VidozaHandler {
 
         // Currently, there only is one <H1> on Vidoza. Good for us.
         let h1_selector = Selector::parse("h1").unwrap();
-        let text = video_info.select(&h1_selector).next().unwrap();
-        let result = text.text().collect();
+        let text = video_info.select(&h1_selector).next();
+        let result = match text {
+            Some(value) => value.text().collect::<String>(),
+            None => "Vidoza".to_string(),
+        };
 
         Ok(result)
     }
