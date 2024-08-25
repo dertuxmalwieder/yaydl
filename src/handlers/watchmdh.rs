@@ -57,7 +57,7 @@ fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<b
 struct WatchMDHHandler;
 impl SiteDefinition for WatchMDHHandler {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"watchmdh.to/.+").unwrap().is_match(url)
+        Regex::new(r"watch(mdh|dirty).to/.+").unwrap().is_match(url)
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
@@ -84,41 +84,18 @@ impl SiteDefinition for WatchMDHHandler {
     fn find_video_direct_url<'a>(
         &'a self,
         video: &'a mut VIDEO,
-        _url: &'a str,
+        url: &'a str,
         _webdriver_port: u16,
         _onlyaudio: bool,
     ) -> Result<String> {
-        // Find the best video format and the rnd value:
-        let re_rnd = Regex::new(r"rnd: '(\d+)'").unwrap();
-        let rnd = re_rnd
-            .captures(&video.info)
-            .unwrap()
-            .get(1)
-            .unwrap()
-            .as_str();
+	let _not_used = get_video_info(video, url, _webdriver_port)?;
+        let video_info_html = Html::parse_document(video.info.as_str());
 
-        let re_vid1 = Regex::new("video_alt_url: 'function/0/(.+?)',").unwrap();
-        let re_vid2 = Regex::new("video_url: 'function/0/(.+?)',").unwrap();
+        let url_selector = Selector::parse("video").unwrap();
+        let url_elem = video_info_html.select(&url_selector).next().unwrap();
+        let url_contents = url_elem.value().attr("src").unwrap();
 
-        let url_contents;
-
-        if re_vid1.is_match(&video.info) {
-            url_contents = re_vid1
-                .captures(&video.info)
-                .unwrap()
-                .get(1)
-                .unwrap()
-                .as_str();
-        } else {
-            url_contents = re_vid2
-                .captures(&video.info)
-                .unwrap()
-                .get(1)
-                .unwrap()
-                .as_str();
-        }
-
-        Ok(String::from(url_contents) + "?rnd=" + rnd)
+        Ok(url_contents.to_string())
     }
 
     fn does_video_exist<'a>(
