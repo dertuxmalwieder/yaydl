@@ -88,7 +88,7 @@ impl SiteDefinition for WatchMDHHandler {
         _webdriver_port: u16,
         _onlyaudio: bool,
     ) -> Result<String> {
-	let _not_used = get_video_info(video, url, _webdriver_port)?;
+        let _not_used = get_video_info(video, url, _webdriver_port)?;
         let video_info_html = Html::parse_document(video.info.as_str());
 
         let url_selector = Selector::parse("video").unwrap();

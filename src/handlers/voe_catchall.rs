@@ -17,6 +17,7 @@
 // - VOE handler for several other domains. -
 //
 // Tried and implemented:
+// - bethshouldercan.com
 // - jayservicestuff.com
 
 use crate::definitions::SiteDefinition;
@@ -76,7 +77,7 @@ fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<b
 struct VoeCatchallHandler;
 impl SiteDefinition for VoeCatchallHandler {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"(?:\.)?jayservicestuff.com/.+")
+        Regex::new(r"(?:\.)?(jayservicestuff|bethshouldercan)\.com/.+")
             .unwrap()
             .is_match(url)
     }
