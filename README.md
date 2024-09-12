@@ -33,6 +33,10 @@ The list of features is deliberately kept short:
 
 ## How to install
 
+### Prebuilt Windows binaries
+
+Available on [cdn.tuxproject.de](https://cdn.tuxproject.de/projects/yaydl/).
+
 ### From the source code
 
 Install Rust (e.g. with [rustup](https://rustup.rs)), then:
