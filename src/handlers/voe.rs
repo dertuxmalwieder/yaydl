@@ -24,11 +24,28 @@ use scraper::{Html, Selector};
 
 use crate::VIDEO;
 
+fn resolve_js_redirect(url: &str) -> String {
+    // VOE tends to redirect. Find the actual target URL:
+    let req = ureq::get(&url).call().unwrap();
+    let body = req.into_string().unwrap();
+
+    let re_redirect = Regex::new(r"window.location.href = '(?P<URL>.*?)'").unwrap();
+    if !re_redirect.is_match(&body) {
+        // No redirect
+        String::from(url)
+    } else {
+        // A redirect...
+        let captures = re_redirect.captures(body.as_str()).unwrap();
+        let returnval = String::from(captures.name("URL").map_or("", |u| u.as_str()));
+        returnval
+    }
+}
+
 fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
     if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
-        let req = ureq::get(&url).call()?;
+        let req = ureq::get(&resolve_js_redirect(&url)).call()?;
         let body = req.into_string()?;
 
         video.info = body;
@@ -43,12 +60,18 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 struct VoeHandler;
 impl SiteDefinition for VoeHandler {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"(?:\.)?voe.sx/.+").unwrap().is_match(url)
+        // We need to catch both VOE.sx and whatever redirectors it uses.
+        // As main.rs hasn't built the VIDEO struct here yet, we'll parse
+        // the resulting website a first time...
+        let req = ureq::get(&resolve_js_redirect(&url)).call().unwrap();
+        let body = req.into_string().unwrap();
+
+        // If the body contains a VOEPlayer, we're in it.
+        Regex::new(r"VOEPlayer").unwrap().is_match(&body)
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
-        // TODO: Does VOE still have playlists?
-        Ok(false)
+        Ok(true)
     }
 
     fn find_video_title<'a>(
@@ -78,7 +101,7 @@ impl SiteDefinition for VoeHandler {
         _onlyaudio: bool,
     ) -> Result<String> {
         let _video_info = get_video_info(video, url)?;
-        let url_re = Regex::new("sources: ..src: '(?P<URL>.+?)'").unwrap();
+        let url_re = Regex::new(r#"Node", "(?P<URL>[^"]+)"#).unwrap();
         let url_search = url_re.captures(&video.info).unwrap();
         let video_url = url_search.name("URL").map_or("", |u| u.as_str());
 
