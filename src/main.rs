@@ -73,6 +73,7 @@ pub struct VIDEO {
     mime: String,
 }
 
+#[allow(non_local_definitions)]
 fn main() -> Result<()> {
     // Argument parsing:
     let args = Args::parse();

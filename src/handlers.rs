@@ -17,6 +17,7 @@
 // - handlers.rs file -
 
 mod porndoe;
+mod pr0gramm;
 mod spankbang;
 mod vidoza;
 mod vimeo;
@@ -24,6 +25,6 @@ mod vivo;
 mod voe;
 mod watchmdh;
 mod xhamster;
-mod youtube;
+mod youtube; // actually, invidious
 
 // Add your own modules here.
