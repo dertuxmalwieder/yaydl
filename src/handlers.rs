@@ -16,6 +16,7 @@
 // Yet Another Youtube Down Loader
 // - handlers.rs file -
 
+mod generic_videofile;
 mod porndoe;
 mod pr0gramm;
 mod spankbang;

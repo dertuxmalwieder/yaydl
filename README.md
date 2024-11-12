@@ -20,6 +20,7 @@
 ## Currently supported sites
 
 * invidious (most of them) · porndoe.com · pr0gramm.com · spankbang.com · Vidoza · Vimeo · vivo.sx · voe.sx · watchdirty.to · xhamster.com · YouTube
+* Also, direct downloads for `.mp4` and `.mpg` files.
 
 There is an easy way to add more supported sites, see below for details.
 

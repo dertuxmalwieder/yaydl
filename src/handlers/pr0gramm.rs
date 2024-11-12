@@ -34,7 +34,7 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
         let id = id_regex.captures(url).unwrap().get(1).unwrap().as_str();
 
         let static_url = format!("https://pr0gramm.com/static/{}", id).to_owned();
-        
+
         let mut agent = ureq::agent();
         let url_p = Url::parse(&static_url)?;
 
