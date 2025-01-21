@@ -21,6 +21,7 @@ use crate::definitions::SiteDefinition;
 use anyhow::Result;
 use regex::Regex;
 use serde_json::Value;
+use url::Url;
 
 use crate::VIDEO;
 
@@ -29,7 +30,16 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Value> {
         // We need to fetch the video information first.
         // Those are hidden behing a config file defined in the page source code.
         // Search for: window.vimeo.clip_page_config.player = {"config_url":"(.+?)"
-        let req = ureq::get(url).call()?;
+        let mut agent = ureq::agent();
+        let url_p = Url::parse(url)?;
+
+        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
+            // Use a proxy:
+            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+        }
+
+        let req = agent.get(url).call()?;
         let body = req.into_string()?;
         let re =
             Regex::new("window.vimeo.clip_page_config.player = .\"config_url\":\"(?P<URL>.+?)\"")
@@ -53,7 +63,7 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Value> {
 
         // The "config_url" body is a JSON structure.
         // Grab and store it:
-        let config_req = ureq::get(&video_info_url).call()?;
+        let config_req = agent.get(&video_info_url).call()?;
         let config_body = config_req.into_string()?;
         video.info.push_str(config_body.as_str());
     }

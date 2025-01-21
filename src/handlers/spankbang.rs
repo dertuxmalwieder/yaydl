@@ -42,8 +42,20 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<bool> {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
         let local_url = url.to_owned();
+
+        // Initialize the agent:
+        let mut agent = ureq::agent();
+        let url_p = Url::parse(&local_url)?;
+
+        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
+            // Use a proxy:
+            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+        }
+
         video.info.push_str(
-            ureq::get(&local_url)
+            agent
+                .get(&local_url)
                 .call()
                 .expect("Could not go to the url")
                 .into_string()

@@ -21,12 +21,24 @@ use crate::definitions::SiteDefinition;
 use anyhow::Result;
 use regex::Regex;
 use scraper::{Html, Selector};
+use url::Url;
 
 use crate::VIDEO;
 
 fn resolve_js_redirect(url: &str) -> String {
     // VOE tends to redirect. Find the actual target URL:
-    let req = ureq::get(&url).call().unwrap();
+    let static_url = url.to_owned();
+
+    let mut agent = ureq::agent();
+    let url_p = Url::parse(&static_url).unwrap();
+
+    if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
+        // Use a proxy:
+        let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+        agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+    }
+
+    let req = agent.get(&static_url).call().expect("could not go to the site URL");
     let body = req.into_string().unwrap();
 
     let re_redirect = Regex::new(r"window.location.href = '(?P<URL>.*?)'").unwrap();
@@ -45,7 +57,16 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
     if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
-        let req = ureq::get(&resolve_js_redirect(&url)).call()?;
+        let mut agent = ureq::agent();
+        let url_p = Url::parse(url)?;
+
+        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
+            // Use a proxy:
+            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+        }
+
+        let req = agent.get(&resolve_js_redirect(url)).call()?;
         let body = req.into_string()?;
 
         video.info = body;
@@ -63,7 +84,16 @@ impl SiteDefinition for VoeHandler {
         // We need to catch both VOE.sx and whatever redirectors it uses.
         // As main.rs hasn't built the VIDEO struct here yet, we'll parse
         // the resulting website a first time...
-        let req = ureq::get(&resolve_js_redirect(&url)).call().unwrap();
+        let mut agent = ureq::agent();
+        let url_p = Url::parse(url).unwrap();
+
+        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
+            // Use a proxy:
+            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+        }
+
+        let req = agent.get(&resolve_js_redirect(&url)).call().unwrap();
         let body = req.into_string().unwrap();
 
         // If the body contains a VOEPlayer, we're in it.

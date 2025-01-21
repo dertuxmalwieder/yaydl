@@ -22,6 +22,7 @@ use anyhow::Result;
 use cienli::ciphers::rot::{Rot, RotType};
 use regex::Regex;
 use scraper::{Html, Selector};
+use url::Url;
 use urlencoding::decode;
 
 use crate::VIDEO;
@@ -30,7 +31,17 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
     if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
-        let req = ureq::get(&url).call()?;
+        // Initialize the agent:
+        let mut agent = ureq::agent();
+        let url_p = Url::parse(&url)?;
+
+        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
+            // Use a proxy:
+            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
+            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
+        }
+
+        let req = agent.get(&url).call()?;
         let body = req.into_string()?;
         video.info.push_str(body.as_str());
     }
