@@ -31,7 +31,7 @@ use url::Url;
 
 // The environment variable YAYDL_INVIDIOUS_INSTANCE can be used to
 // define the instance to use, otherwise, yaydl defaults to this:
-const INVIDIOUS_INSTANCE: &str = "https://invidious.privacyredirect.com";
+const INVIDIOUS_INSTANCE: &str = "https://invidious.nerdvpn.de";
 
 fn get_invidious_instance() -> String {
     let invidious_env = env::var("YAYDL_INVIDIOUS_INSTANCE");
