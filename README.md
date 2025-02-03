@@ -68,6 +68,10 @@ Install Rust (e.g. with [rustup](https://rustup.rs)), then:
 
     % pkgin install yaydl
 
+`xbps-install` on Void Linux:
+
+    % xbps-install yaydl
+
 Other package managers:
 
 * Nobody has provided any other packages for `yaydl` yet. You can help!
