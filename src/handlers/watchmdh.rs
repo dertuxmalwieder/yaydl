@@ -57,7 +57,9 @@ fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<b
 struct WatchMDHHandler;
 impl SiteDefinition for WatchMDHHandler {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"watch(mdh|dirty).to/.+").unwrap().is_match(url)
+        Regex::new(r"watch(mdh|dirty).(is|to)/.+")
+            .unwrap()
+            .is_match(url)
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {

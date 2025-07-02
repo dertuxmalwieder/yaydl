@@ -55,7 +55,7 @@ pub fn download_from_playlist(url: &str, filename: &str, verbose: bool) -> Resul
         agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
     }
 
-    let request = agent.get(url.as_str());
+    let request = agent.get(url.as_str()).set("Referer", &url.as_str());
     let playlist_text = request.call()?.into_string()?;
 
     if verbose {
@@ -120,7 +120,7 @@ pub fn download(url: &str, filename: &str) -> Result<()> {
         agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
     }
 
-    let resp = agent.get(url.as_str()).call()?;
+    let resp = agent.get(url.as_str()).set("Referer", &url.as_str()).call()?;
 
     // Find the video size:
     let total_size = resp

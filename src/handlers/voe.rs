@@ -38,7 +38,10 @@ fn resolve_js_redirect(url: &str) -> String {
         agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
     }
 
-    let req = agent.get(&static_url).call().expect("could not go to the site URL");
+    let req = agent
+        .get(&static_url)
+        .call()
+        .expect("could not go to the site URL");
     let body = req.into_string().unwrap();
 
     let re_redirect = Regex::new(r"window.location.href = '(?P<URL>.*?)'").unwrap();
