@@ -26,6 +26,8 @@ use std::{
 };
 use url::Url;
 
+use crate::agent::{AgentBase, YaydlAgent};
+
 struct DownloadProgress<'a, R> {
     inner: R,
     progress_bar: &'a ProgressBar,
@@ -47,16 +49,15 @@ pub fn download_from_playlist(url: &str, filename: &str, verbose: bool) -> Resul
     }
 
     let mut url = Url::parse(url)?;
-    let mut agent = ureq::agent();
+    let agent = YaydlAgent::init(url.clone());
 
-    if let Some(env_proxy) = env_proxy::for_url(&url).host_port() {
-        // Use a proxy:
-        let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-        agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-    }
-
-    let request = agent.get(url.as_str()).set("Referer", &url.as_str());
-    let playlist_text = request.call()?.into_string()?;
+    let request = agent.get(url.as_str()).header("Referer", url.as_str());
+    let playlist_text = request
+        .call()
+        .expect("Could not go to the playlist url")
+        .body_mut()
+        .read_to_string()
+        .expect("Could not read the playlist source");
 
     if verbose {
         println!("{}", "Parsing ...");
@@ -94,8 +95,11 @@ pub fn download_from_playlist(url: &str, filename: &str, verbose: bool) -> Resul
         //   result:        https://foo.bar/play/file1.ts
         url.path_segments_mut().unwrap().pop().push(&segment.uri);
 
-        let request = agent.get(url.as_str());
-        let mut source = request.call()?.into_reader();
+        let mut request = agent
+            .get(url.as_str())
+            .header("Referer", url.as_str())
+            .call()?;
+        let mut source = request.body_mut().as_reader();
 
         // Note: As we opened the file for appending only,
         // file concatenation happens automatically.
@@ -112,23 +116,18 @@ pub fn download_from_playlist(url: &str, filename: &str, verbose: bool) -> Resul
 
 pub fn download(url: &str, filename: &str) -> Result<()> {
     let url = Url::parse(url)?;
-    let mut agent = ureq::agent();
+    let agent = YaydlAgent::init(url.clone());
 
-    if let Some(env_proxy) = env_proxy::for_url(&url).host_port() {
-        // Use a proxy:
-        let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-        agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-    }
-
-    let resp = agent.get(url.as_str()).set("Referer", &url.as_str()).call()?;
+    let mut resp = agent
+        .get(url.as_str())
+        .header("Referer", url.as_str())
+        .call()?;
 
     // Find the video size:
     let total_size = resp
-        .header("Content-Length")
-        .unwrap_or("0")
-        .parse::<u64>()?;
-
-    let mut request = agent.get(url.as_str());
+        .body()
+        .content_length()
+        .expect("Failed to read the segment size. Aborting.");
 
     // Display a progress bar:
     let pb = ProgressBar::new(total_size);
@@ -146,17 +145,17 @@ pub fn download(url: &str, filename: &str) -> Result<()> {
         // Continue the file:
         let size = file.metadata()?.len() - 1;
         // Override the range:
-        request = agent
+        resp = agent
             .get(url.as_str())
-            .set("Range", &format!("bytes={}-", size))
-            .to_owned();
+            .header("Referer", url.as_str())
+            .header("Range", &format!("bytes={}-", size))
+            .call()?;
         pb.inc(size);
     }
 
-    let resp = request.call()?;
     let mut source = DownloadProgress {
         progress_bar: &pb,
-        inner: resp.into_reader(),
+        inner: resp.body_mut().as_reader(),
     };
 
     let mut dest = fs::OpenOptions::new()

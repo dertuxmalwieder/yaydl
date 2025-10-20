@@ -124,10 +124,10 @@ impl SiteDefinition for NoopExampleHandler {
     //                   Defaults to 0 if there is no WebDriver configured.
     // - onlyaudio:      true if only the audio part of the video should be
     //                   kept, else false.
-    fn can_handle_url<'a>(&'a self, url: &'a str, webdriver_port: u16) -> bool {
+    fn can_handle_url<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool> {
         // Return true here if <url> can be covered by this handler.
         // Note that yaydl will skip all other handlers then.
-        true
+        Ok(true)
     }
 
     fn does_video_exist<'a>(&'a self, video: &'a mut VIDEO, url: &'a str, webdriver_port: u16) -> Result<bool> {

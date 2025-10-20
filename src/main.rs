@@ -24,6 +24,7 @@ use std::{
     str::FromStr,
 };
 
+mod agent;
 mod definitions;
 mod download;
 mod ffmpeg;
@@ -88,13 +89,14 @@ fn main() -> Result<()> {
         mime: String::new(),
     };
 
+    let mut handled = false;
     for handler in inventory::iter::<&dyn definitions::SiteDefinition> {
         // "15:15 And he found a pair of eyes, scanning the directories for files."
         // https://kingjamesprogramming.tumblr.com/post/123368869357/1515-and-he-found-a-pair-of-eyes-scanning-the
         // ------------------------------------
 
         // Find a known handler for <in_url>:
-        if !handler.can_handle_url(in_url) {
+        if !handler.can_handle_url(in_url).unwrap_or(false) {
             continue;
         }
 
@@ -122,11 +124,20 @@ fn main() -> Result<()> {
 
         let video_exists = handler.does_video_exist(&mut video, in_url, webdriverport)?;
         if !video_exists {
-            println!("The video could not be found. Invalid link?");
+            if args.verbose {
+                println!(
+                    "{} failed to find the video. Checking for other supported handlers.",
+                    handler.display_name()
+                );
+            }
+
+            // Check if we have any more handlers:
+            continue;
         } else {
             if args.verbose {
                 println!("The requested video was found. Processing...");
             }
+            handled = true;
 
             let video_title = handler.find_video_title(&mut video, in_url, webdriverport);
             let vt = match video_title {
@@ -234,6 +245,10 @@ fn main() -> Result<()> {
             "yaydl could not find a site definition that would satisfy {}. Exiting.",
             in_url
         );
+    }
+
+    if !handled {
+        println!("The video could not be found. Invalid link?");
     }
 
     Ok(())

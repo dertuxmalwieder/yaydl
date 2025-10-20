@@ -16,31 +16,30 @@
 // Yet Another Youtube Down Loader
 // - Vimeo handler -
 
+use crate::agent::{AgentBase, YaydlAgent};
 use crate::definitions::SiteDefinition;
+use crate::VIDEO;
 
 use anyhow::Result;
 use regex::Regex;
 use serde_json::Value;
 use url::Url;
 
-use crate::VIDEO;
-
 fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Value> {
     if video.info.is_empty() {
         // We need to fetch the video information first.
         // Those are hidden behing a config file defined in the page source code.
         // Search for: window.vimeo.clip_page_config.player = {"config_url":"(.+?)"
-        let mut agent = ureq::agent();
         let url_p = Url::parse(url)?;
+        let agent = YaydlAgent::init(url_p);
 
-        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-            // Use a proxy:
-            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        }
-
-        let req = agent.get(url).call()?;
-        let body = req.into_string()?;
+        let body = agent
+            .get(url)
+            .call()
+            .expect("Could not go to the url")
+            .body_mut()
+            .read_to_string()
+            .expect("Could not read the site source");
         let re =
             Regex::new("window.vimeo.clip_page_config.player = .\"config_url\":\"(?P<URL>.+?)\"")
                 .unwrap();
@@ -63,8 +62,13 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Value> {
 
         // The "config_url" body is a JSON structure.
         // Grab and store it:
-        let config_req = agent.get(&video_info_url).call()?;
-        let config_body = config_req.into_string()?;
+        let config_body = agent
+            .get(&video_info_url)
+            .call()
+            .expect("Could not go to the url")
+            .body_mut()
+            .read_to_string()
+            .expect("Could not read the site source");
         video.info.push_str(config_body.as_str());
     }
 
@@ -76,8 +80,8 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Value> {
 // Implement the site definition:
 struct VimeoHandler;
 impl SiteDefinition for VimeoHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"(?:www\.)?vimeo.com/.+").unwrap().is_match(url)
+    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+        Ok(Regex::new(r"(?:www\.)?vimeo.com/.+").unwrap().is_match(url))
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {

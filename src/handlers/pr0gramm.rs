@@ -16,14 +16,14 @@
 // Yet Another Youtube Down Loader
 // - pr0gramm handler -
 
+use crate::agent::{AgentBase, YaydlAgent};
 use crate::definitions::SiteDefinition;
+use crate::VIDEO;
 
 use anyhow::Result;
 use regex::Regex;
 use scraper::{Html, Selector};
 use url::Url;
-
-use crate::VIDEO;
 
 fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
     if video.info.is_empty() {
@@ -35,18 +35,17 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 
         let static_url = format!("https://pr0gramm.com/static/{}", id).to_owned();
 
-        let mut agent = ureq::agent();
         let url_p = Url::parse(&static_url)?;
+        let agent = YaydlAgent::init(url_p);
 
-        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-            // Use a proxy:
-            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        }
-
-        let req = agent.get(&static_url).call()?;
-        let body = req.into_string()?;
-        video.info.push_str(body.as_str());
+        let body = agent
+            .get(&static_url)
+            .call()
+            .expect("Could not go to the url")
+            .body_mut()
+            .read_to_string()
+            .expect("Could not read the site source");
+        video.info.push_str(&body);
     }
 
     // Return it:
@@ -57,8 +56,8 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 // Implement the site definition:
 struct Pr0grammHandler;
 impl SiteDefinition for Pr0grammHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"pr0gramm.com/.+").unwrap().is_match(url)
+    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+        Ok(Regex::new(r"pr0gramm.com/.+").unwrap().is_match(url))
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {

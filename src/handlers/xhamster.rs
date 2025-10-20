@@ -16,7 +16,9 @@
 // Yet Another Youtube Down Loader
 // - xHamster handler -
 
+use crate::agent::{AgentBase, YaydlAgent};
 use crate::definitions::SiteDefinition;
+use crate::VIDEO;
 
 use anyhow::{anyhow, Result};
 use nom::Finish;
@@ -24,31 +26,22 @@ use regex::Regex;
 use scraper::{Html, Selector};
 use url::Url;
 
-use crate::VIDEO;
-
 fn get_video_info(video: &mut VIDEO, url: &str) -> Result<bool> {
     if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
-        let local_url = url.to_owned();
-        let mut agent = ureq::agent();
-
         let url_p = Url::parse(url)?;
-        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-            // Use a proxy:
-            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        }
+        let agent = YaydlAgent::init(url_p);
 
-        video.info.push_str(
-            agent
-                .get(&local_url)
-                .call()
-                .expect("Could not go to the url")
-                .into_string()
-                .expect("Could not read the site source")
-                .as_str(),
-        );
+        let local_url = url.to_owned();
+        let body = agent
+            .get(&local_url)
+            .call()
+            .expect("Could not go to the url")
+            .body_mut()
+            .read_to_string()
+            .expect("Could not read the site source");
+        video.info.push_str(&body);
     }
 
     Ok(true)
@@ -57,8 +50,8 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<bool> {
 // Implement the site definition:
 struct XHamsterHandler;
 impl SiteDefinition for XHamsterHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"xhamster.com/.+").unwrap().is_match(url)
+    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+        Ok(Regex::new(r"xhamster.com/.+").unwrap().is_match(url))
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
@@ -95,14 +88,9 @@ impl SiteDefinition for XHamsterHandler {
     ) -> Result<String> {
         let _not_used = get_video_info(video, url)?;
         let video_info_html = Html::parse_document(video.info.as_str());
-        let mut agent = ureq::agent();
 
         let url_p = Url::parse(url)?;
-        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-            // Use a proxy:
-            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        }
+        let agent = YaydlAgent::init(url_p);
 
         // Find the playlist first:
         let url_selector = Selector::parse(r#"link[rel="preload"][as="fetch"]"#).unwrap();
@@ -111,7 +99,12 @@ impl SiteDefinition for XHamsterHandler {
 
         let mut playlist_url = Url::parse(url_contents)?;
         let request = agent.get(playlist_url.as_str());
-        let playlist_text = request.call()?.into_string()?;
+        let playlist_text = request
+            .call()
+            .expect("Could not go to the playlist url")
+            .body_mut()
+            .read_to_string()
+            .expect("Could not read the playlist source");
 
         // Parse the playlist:
         let playlist = m3u8_rs::parse_media_playlist(&playlist_text.as_bytes())

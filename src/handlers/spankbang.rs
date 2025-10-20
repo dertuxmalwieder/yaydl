@@ -26,14 +26,14 @@
 // Yet Another Youtube Down Loader
 // - Spankbang handler -
 
+use crate::agent::{AgentBase, YaydlAgent};
 use crate::definitions::SiteDefinition;
+use crate::VIDEO;
 
 use anyhow::Result;
 use regex::Regex;
 use scraper::{Html, Selector};
 use url::Url;
-
-use crate::VIDEO;
 
 const MAX_FILENAME_LENGTH: usize = 142; // filename is based on url path description string
 
@@ -44,24 +44,17 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<bool> {
         let local_url = url.to_owned();
 
         // Initialize the agent:
-        let mut agent = ureq::agent();
         let url_p = Url::parse(&local_url)?;
+        let agent = YaydlAgent::init(url_p);
 
-        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-            // Use a proxy:
-            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        }
-
-        video.info.push_str(
-            agent
-                .get(&local_url)
-                .call()
-                .expect("Could not go to the url")
-                .into_string()
-                .expect("Could not read the site source")
-                .as_str(),
-        );
+        let body = agent
+            .get(&local_url)
+            .call()
+            .expect("Could not go to the url")
+            .body_mut()
+            .read_to_string()
+            .expect("Could not read the site source");
+        video.info.push_str(&body);
     }
 
     Ok(true)
@@ -70,8 +63,8 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<bool> {
 // Implement the site definition:
 struct SpankbangHandler;
 impl SiteDefinition for SpankbangHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"spankbang.com/.+").unwrap().is_match(url)
+    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+        Ok(Regex::new(r"spankbang.com/.+").unwrap().is_match(url))
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {

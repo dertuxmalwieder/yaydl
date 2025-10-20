@@ -16,6 +16,7 @@
 // Yet Another Youtube Down Loader
 // - YouTube and Invidious handler -
 
+use crate::agent::{AgentBase, YaydlAgent};
 use crate::definitions::SiteDefinition;
 use crate::VIDEO;
 
@@ -54,18 +55,17 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
         let local_url = invidious_url.to_owned();
 
         // Initialize the agent:
-        let mut agent = ureq::agent();
         let url_p = Url::parse(&local_url)?;
+        let agent = YaydlAgent::init(url_p);
 
-        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-            // Use a proxy:
-            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        }
-
-        let req = agent.get(&local_url).call()?;
-        let body = req.into_string()?;
-        video.info.push_str(body.as_str());
+        let body = agent
+            .get(&local_url)
+            .call()
+            .expect("Could not go to the url")
+            .body_mut()
+            .read_to_string()
+            .expect("Could not read the site source");
+        video.info.push_str(&body);
     }
 
     let d = Html::parse_document(&video.info);
@@ -75,10 +75,10 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 // Implement the site definition:
 struct YouTubeHandler;
 impl SiteDefinition for YouTubeHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"invidious\.|(?:www\.)?youtu(?:be\.com|\.be)/")
+    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+        Ok(Regex::new(r"invidious\.|(?:www\.)?youtu(?:be\.com|\.be)/")
             .unwrap()
-            .is_match(url)
+            .is_match(url))
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
@@ -135,7 +135,7 @@ impl SiteDefinition for YouTubeHandler {
                 video.mime = mime_split.next().unwrap().to_string();
 
                 let relative_url = this_tag.value().attr("src").unwrap();
-                url_to_choose = format!("{}{}", get_invidious_instance(), relative_url);
+                url_to_choose = relative_url.to_string();
 
                 // Only update last_vq if it's the best format yet.
                 last_vq = String::from(this_vq);
@@ -147,6 +147,15 @@ impl SiteDefinition for YouTubeHandler {
                 "Could not find a working video - aborting.".to_string(),
             ))
         } else {
+            // Check whether we have a redirector in place.
+            let url_p = Url::parse(&url_to_choose)?;
+            let agent = YaydlAgent::init(url_p);
+            let resp = agent.get(&url_to_choose).call()?;
+            let has_redirect = resp.headers().get("Location");
+            if has_redirect.is_some() {
+                url_to_choose = has_redirect.unwrap().to_str()?.to_string();
+            }
+
             Ok(url_to_choose)
         }
     }

@@ -16,7 +16,9 @@
 // Yet Another Youtube Down Loader
 // - VIVO handler -
 
+use crate::agent::{AgentBase, YaydlAgent};
 use crate::definitions::SiteDefinition;
+use crate::VIDEO;
 
 use anyhow::Result;
 use cienli::ciphers::rot::{Rot, RotType};
@@ -25,24 +27,21 @@ use scraper::{Html, Selector};
 use url::Url;
 use urlencoding::decode;
 
-use crate::VIDEO;
-
 fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
     if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
         // Initialize the agent:
-        let mut agent = ureq::agent();
         let url_p = Url::parse(&url)?;
+        let agent = YaydlAgent::init(url_p);
 
-        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-            // Use a proxy:
-            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        }
-
-        let req = agent.get(&url).call()?;
-        let body = req.into_string()?;
+        let body = agent
+            .get(url)
+            .call()
+            .expect("Could not go to the url")
+            .body_mut()
+            .read_to_string()
+            .expect("Could not read the site source");
         video.info.push_str(body.as_str());
     }
 
@@ -53,8 +52,8 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 // Implement the site definition:
 struct VivoHandler;
 impl SiteDefinition for VivoHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"vivo.sx/.+").unwrap().is_match(url)
+    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+        Ok(Regex::new(r"vivo.sx/.+").unwrap().is_match(url))
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {

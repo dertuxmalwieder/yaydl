@@ -17,14 +17,13 @@
 // - PornDoe handler -
 
 use crate::definitions::SiteDefinition;
+use crate::VIDEO;
 
 use anyhow::{anyhow, Result};
 use fantoccini::ClientBuilder;
 use regex::Regex;
 use scraper::{Html, Selector};
 use tokio::runtime;
-
-use crate::VIDEO;
 
 fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<bool> {
     if video.info.is_empty() {
@@ -67,8 +66,8 @@ fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<b
 // Implement the site definition:
 struct PornDoeHandler;
 impl SiteDefinition for PornDoeHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"porndoe.com/.+").unwrap().is_match(url)
+    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+        Ok(Regex::new(r"porndoe.com/.+").unwrap().is_match(url))
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {

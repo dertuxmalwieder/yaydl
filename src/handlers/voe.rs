@@ -16,43 +16,40 @@
 // Yet Another Youtube Down Loader
 // - VOE handler -
 
+use crate::agent::{AgentBase, YaydlAgent};
 use crate::definitions::SiteDefinition;
+use crate::VIDEO;
 
 use anyhow::Result;
 use regex::Regex;
 use scraper::{Html, Selector};
 use url::Url;
 
-use crate::VIDEO;
-
-fn resolve_js_redirect(url: &str) -> String {
+fn resolve_js_redirect(url: &str) -> Result<String> {
     // VOE tends to redirect. Find the actual target URL:
     let static_url = url.to_owned();
 
-    let mut agent = ureq::agent();
     let url_p = Url::parse(&static_url).unwrap();
+    let agent = YaydlAgent::init(url_p);
 
-    if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-        // Use a proxy:
-        let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-        agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-    }
-
-    let req = agent
-        .get(&static_url)
-        .call()
-        .expect("could not go to the site URL");
-    let body = req.into_string().unwrap();
+    // We need to fail here if anything goes wrong.
+    // To avoid conflicts with the generic download handler, we
+    // call this method right in the can_handle_url() method.
+    // That means, however, that even direct MP4 downloads are
+    // (tried to be) read here. As that will force a
+    // BodyExceedsLimit error, we'll just return a "nope", so
+    // the fallback to other handlers is considered.
+    let body = agent.get(url).call()?.body_mut().read_to_string()?;
 
     let re_redirect = Regex::new(r"window.location.href = '(?P<URL>.*?)'").unwrap();
     if !re_redirect.is_match(&body) {
         // No redirect
-        String::from(url)
+        Ok(String::from(url))
     } else {
         // A redirect...
         let captures = re_redirect.captures(body.as_str()).unwrap();
         let returnval = String::from(captures.name("URL").map_or("", |u| u.as_str()));
-        returnval
+        Ok(returnval)
     }
 }
 
@@ -60,19 +57,17 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
     if video.info.is_empty() {
         // We need to fetch the video information first.
         // It will contain the whole body for now.
-        let mut agent = ureq::agent();
         let url_p = Url::parse(url)?;
+        let agent = YaydlAgent::init(url_p);
 
-        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-            // Use a proxy:
-            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        }
-
-        let req = agent.get(&resolve_js_redirect(url)).call()?;
-        let body = req.into_string()?;
-
-        video.info = body;
+        let body = agent
+            .get(url)
+            .call()
+            .expect("Could not go to the url")
+            .body_mut()
+            .read_to_string()
+            .expect("Could not read the site source");
+        video.info.push_str(&body);
     }
 
     // Return it:
@@ -83,24 +78,18 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 // Implement the site definition:
 struct VoeHandler;
 impl SiteDefinition for VoeHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
+    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
         // We need to catch both VOE.sx and whatever redirectors it uses.
         // As main.rs hasn't built the VIDEO struct here yet, we'll parse
         // the resulting website a first time...
-        let mut agent = ureq::agent();
-        let url_p = Url::parse(url).unwrap();
+        let url_p = Url::parse(url)?;
+        let agent = YaydlAgent::init(url_p);
 
-        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-            // Use a proxy:
-            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        }
-
-        let req = agent.get(&resolve_js_redirect(&url)).call().unwrap();
-        let body = req.into_string().unwrap();
+        let redir_url = &resolve_js_redirect(&url)?;
+        let body = agent.get(redir_url).call()?.body_mut().read_to_string()?;
 
         // If the body contains a VOEPlayer, we're in it.
-        Regex::new(r"VOEPlayer").unwrap().is_match(&body)
+        Ok(Regex::new(r"VOEPlayer").unwrap().is_match(&body))
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {

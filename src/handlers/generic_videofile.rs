@@ -16,20 +16,20 @@
 // Yet Another Youtube Down Loader
 // - single video file handler -
 
+use crate::agent::{AgentBase, YaydlAgent};
 use crate::definitions::SiteDefinition;
+use crate::VIDEO;
 
 use anyhow::Result;
 use regex::Regex;
 use std::path::Path;
 use url::Url;
 
-use crate::VIDEO;
-
 // Implement the site definition:
 struct GenericFileHandler;
 impl SiteDefinition for GenericFileHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> bool {
-        Regex::new(r"\.mp(4|g)$").unwrap().is_match(url)
+    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+        Ok(Regex::new(r"\.mp(4|g)$").unwrap().is_match(url))
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
@@ -43,13 +43,13 @@ impl SiteDefinition for GenericFileHandler {
         url: &'a str,
         _webdriver_port: u16,
     ) -> Result<String> {
-        // Extract the file name from the URL:
+        // Extract the file name from the URL, but get rid of the extension,
+        // so we won't add it a second time later:
         let filename = Path::new(url)
-            .file_name()
+            .file_stem()
             .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string();
+            .to_string_lossy()
+            .into_owned();
         Ok(filename)
     }
 
@@ -70,14 +70,8 @@ impl SiteDefinition for GenericFileHandler {
         url: &'a str,
         _webdriver_port: u16,
     ) -> Result<bool> {
-        let mut agent = ureq::agent();
         let url_p = Url::parse(url)?;
-
-        if let Some(env_proxy) = env_proxy::for_url(&url_p).host_port() {
-            // Use a proxy:
-            let proxy = ureq::Proxy::new(format!("{}:{}", env_proxy.0, env_proxy.1));
-            agent = ureq::AgentBuilder::new().proxy(proxy.unwrap()).build();
-        }
+        let agent = YaydlAgent::init(url_p);
 
         match agent.get(url).call() {
             Ok(_) => Ok(true),
