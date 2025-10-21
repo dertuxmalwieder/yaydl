@@ -126,12 +126,13 @@ impl SiteDefinition for NoopExampleHandler {
     //                   kept, else false.
     fn can_handle_url<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool> {
         // Return true here if <url> can be covered by this handler.
-        // Note that yaydl will skip all other handlers then.
+        // Note that yaydl will skip all other handlers unless does_video_exist() is false.
         Ok(true)
     }
 
     fn does_video_exist<'a>(&'a self, video: &'a mut VIDEO, url: &'a str, webdriver_port: u16) -> Result<bool> {
         // Return true here, if the video exists.
+        // If it's false, yaydl will try the next matching handler.
         Ok(false)
     }
 
