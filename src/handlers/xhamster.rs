@@ -22,7 +22,6 @@ use crate::VIDEO;
 
 use anyhow::{anyhow, Result};
 use nom::Finish;
-use regex::Regex;
 use scraper::{Html, Selector};
 use url::Url;
 
@@ -51,7 +50,24 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<bool> {
 struct XHamsterHandler;
 impl SiteDefinition for XHamsterHandler {
     fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
-        Ok(Regex::new(r"xhamster.com/.+").unwrap().is_match(url))
+        let mut video = VIDEO {
+            info: String::new(),
+            title: String::new(),
+            mime: String::new(),
+        };
+        
+        let _not_used = get_video_info(&mut video, url)?;
+        let video_info_html = Html::parse_document(video.info.as_str());
+
+        // xHamster URLs contain application-name=="xHamster".
+        let app_selector = Selector::parse(r#"meta[name="application-name"]"#).unwrap();
+        let app_elem = video_info_html.select(&app_selector).next().unwrap();
+        let app_name = app_elem.value().attr("content").unwrap();
+
+        match app_name == "xHamster" {
+            true => Ok(true),
+            _ => Ok(false)
+        }
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
