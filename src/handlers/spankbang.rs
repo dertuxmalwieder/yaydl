@@ -68,7 +68,7 @@ impl SiteDefinition for SpankbangHandler {
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
-        // Generic has playlists.
+        // Spankbank does not have playlists.
         Ok(false)
     }
 
