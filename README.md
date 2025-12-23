@@ -20,6 +20,7 @@
 ## Currently supported sites
 
 * invidious (most of them) · porndoe.com · pr0gramm.com · spankbang.com · Vidoza · Vimeo · vivo.sx · voe.sx · watchdirty.to · xhamster.com · YouTube
+* (Hopefully) Most sites that use a KT/KVS5 player widget
 * Also, direct downloads for `.mp4` and `.mpg` files.
 
 There is an easy way to add more supported sites, see below for details.
@@ -124,7 +125,7 @@ impl SiteDefinition for NoopExampleHandler {
     //                   Defaults to 0 if there is no WebDriver configured.
     // - onlyaudio:      true if only the audio part of the video should be
     //                   kept, else false.
-    fn can_handle_url<'a>(&'a self, url: &'a str, webdriver_port: u16) -> Result<bool> {
+    fn can_handle_url<'a>(&'a self, video: &mut VIDEO, url: &'a str, webdriver_port: u16) -> Result<bool> {
         // Return true here if <url> can be covered by this handler.
         // Note that yaydl will skip all other handlers unless does_video_exist() is false.
         Ok(true)

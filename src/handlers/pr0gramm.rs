@@ -56,7 +56,12 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 // Implement the site definition:
 struct Pr0grammHandler;
 impl SiteDefinition for Pr0grammHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+    fn can_handle_url<'a>(
+        &'a self,
+        _video: &mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<bool> {
         Ok(Regex::new(r"pr0gramm.com/.+").unwrap().is_match(url))
     }
 

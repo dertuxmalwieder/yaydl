@@ -75,7 +75,12 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 // Implement the site definition:
 struct YouTubeHandler;
 impl SiteDefinition for YouTubeHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+    fn can_handle_url<'a>(
+        &'a self,
+        _video: &mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<bool> {
         Ok(Regex::new(r"invidious\.|(?:www\.)?youtu(?:be\.com|\.be)/")
             .unwrap()
             .is_match(url))

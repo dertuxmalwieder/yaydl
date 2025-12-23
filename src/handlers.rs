@@ -28,4 +28,7 @@ mod watchmdh;
 mod xhamster;
 mod youtube; // actually, invidious
 
+// Fallbacks start with zz_ so they come last.
+mod zz_ktplayer;
+
 // Add your own modules here.

@@ -78,7 +78,12 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<Html> {
 // Implement the site definition:
 struct VoeHandler;
 impl SiteDefinition for VoeHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+    fn can_handle_url<'a>(
+        &'a self,
+        _video: &mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<bool> {
         // We need to catch both VOE.sx and whatever redirectors it uses.
         // As main.rs hasn't built the VIDEO struct here yet, we'll parse
         // the resulting website a first time...

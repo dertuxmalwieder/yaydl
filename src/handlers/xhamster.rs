@@ -49,24 +49,28 @@ fn get_video_info(video: &mut VIDEO, url: &str) -> Result<bool> {
 // Implement the site definition:
 struct XHamsterHandler;
 impl SiteDefinition for XHamsterHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
-        let mut video = VIDEO {
-            info: String::new(),
-            title: String::new(),
-            mime: String::new(),
-        };
-        
-        let _not_used = get_video_info(&mut video, url)?;
+    fn can_handle_url<'a>(
+        &'a self,
+        video: &mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<bool> {
+        let _not_used = get_video_info(video, url)?;
         let video_info_html = Html::parse_document(video.info.as_str());
 
         // xHamster URLs contain application-name=="xHamster".
         let app_selector = Selector::parse(r#"meta[name="application-name"]"#).unwrap();
-        let app_elem = video_info_html.select(&app_selector).next().unwrap();
-        let app_name = app_elem.value().attr("content").unwrap();
+        let app_elem = video_info_html.select(&app_selector).next();
+        match app_elem {
+            Some(elem) => {
+                let app_name = elem.value().attr("content").unwrap();
 
-        match app_name == "xHamster" {
-            true => Ok(true),
-            _ => Ok(false)
+                match app_name == "xHamster" {
+                    true => Ok(true),
+                    _ => Ok(false),
+                }
+            }
+            None => Ok(false),
         }
     }
 
@@ -77,11 +81,11 @@ impl SiteDefinition for XHamsterHandler {
 
     fn find_video_title<'a>(
         &'a self,
-        video: &'a mut VIDEO,
+        video: &mut VIDEO,
         url: &'a str,
         _webdriver_port: u16,
     ) -> Result<String> {
-        let _not_used = get_video_info(video, url)?;
+        let _ = get_video_info(video, url)?;
         let video_info_html = Html::parse_document(video.info.as_str());
 
         let h1_selector = Selector::parse("h1").unwrap();

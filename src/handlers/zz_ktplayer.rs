@@ -14,13 +14,12 @@
  */
 
 // Yet Another Youtube Down Loader
-// - WatchMDH handler -
+// - Fallback KT/KVS5 player handler -
 
 use crate::definitions::SiteDefinition;
 
 use anyhow::Result;
 use fantoccini::ClientBuilder;
-use regex::Regex;
 use scraper::{Html, Selector};
 use tokio::runtime;
 
@@ -37,6 +36,7 @@ fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<b
             .enable_io()
             .build()
             .unwrap();
+
         rt.block_on(async move {
             let webdriver_url = format!("http://localhost:{}", webdriver_port);
             let c = ClientBuilder::native()
@@ -44,7 +44,25 @@ fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<b
                 .await
                 .expect("failed to connect to web driver");
             c.goto(&local_url).await.expect("could not go to the URL");
-            let body = c.source().await.expect("could not read the site source");
+            let mut body = c.source().await.expect("could not read the site source");
+
+            // KT player sites usually have an IFRAME that contains the embed code.
+            // Do we have that here?
+            let html = Html::parse_document(body.as_str());
+            let iframe_selector = Selector::parse(r#"iframe"#).unwrap();
+            let iframe_elem = html.select(&iframe_selector).next();
+
+            match iframe_elem {
+                Some(iframe) => {
+                    // We do. Retry with the first iframe's source.
+                    c.goto(iframe.value().attr("src").unwrap())
+                        .await
+                        .expect("could not go to the URL");
+                    body = c.source().await.expect("could not read the iframe source");
+                }
+                None => (),
+            };
+
             video.info.push_str(body.as_str());
             c.close_window().await.expect("could not close the window");
         });
@@ -54,21 +72,28 @@ fn get_video_info(video: &mut VIDEO, url: &str, webdriver_port: u16) -> Result<b
 }
 
 // Implement the site definition:
-struct WatchMDHHandler;
-impl SiteDefinition for WatchMDHHandler {
+struct ZZKTPlayerHandler;
+impl SiteDefinition for ZZKTPlayerHandler {
     fn can_handle_url<'a>(
         &'a self,
-        _video: &mut VIDEO,
+        video: &mut VIDEO,
         url: &'a str,
-        _webdriver_port: u16,
+        webdriver_port: u16,
     ) -> Result<bool> {
-        Ok(Regex::new(r"watch(mdh|dirty).(is|to)/.+")
-            .unwrap()
-            .is_match(url))
+        // KTPlayer sites usually have a DIV named 'kt_player'.
+        let _ = get_video_info(video, url, webdriver_port)?;
+        let video_info_html = Html::parse_document(video.info.as_str());
+
+        let div_selector = Selector::parse(r#"div[id="kt_player"]"#).unwrap();
+        let div_elem = video_info_html.select(&div_selector).next();
+
+        match div_elem {
+            Some(_div) => Ok(true),
+            None => Ok(false),
+        }
     }
 
     fn is_playlist<'a>(&'a self, _url: &'a str, _webdriver_port: u16) -> Result<bool> {
-        // WatchMDH has no playlists.
         Ok(false)
     }
 
@@ -78,7 +103,7 @@ impl SiteDefinition for WatchMDHHandler {
         url: &'a str,
         webdriver_port: u16,
     ) -> Result<String> {
-        let _not_used = get_video_info(video, url, webdriver_port)?;
+        let _ = get_video_info(video, url, webdriver_port)?;
         let video_info_html = Html::parse_document(video.info.as_str());
 
         let title_selector = Selector::parse(r#"meta[property="og:title"]"#).unwrap();
@@ -95,9 +120,9 @@ impl SiteDefinition for WatchMDHHandler {
         _webdriver_port: u16,
         _onlyaudio: bool,
     ) -> Result<String> {
-        let _not_used = get_video_info(video, url, _webdriver_port)?;
+        let _ = get_video_info(video, url, _webdriver_port)?;
         let video_info_html = Html::parse_document(video.info.as_str());
-
+        
         let url_selector = Selector::parse("video").unwrap();
         let url_elem = video_info_html.select(&url_selector).next().unwrap();
         let url_contents = url_elem.value().attr("src").unwrap();
@@ -111,12 +136,12 @@ impl SiteDefinition for WatchMDHHandler {
         url: &'a str,
         webdriver_port: u16,
     ) -> Result<bool> {
-        let _video_info = get_video_info(video, url, webdriver_port);
+        let _ = get_video_info(video, url, webdriver_port);
         Ok(!video.info.is_empty())
     }
 
     fn display_name<'a>(&'a self) -> String {
-        "WatchMDH".to_string()
+        "Generic KT player".to_string()
     }
 
     fn find_video_file_extension<'a>(
@@ -136,5 +161,5 @@ impl SiteDefinition for WatchMDHHandler {
 
 // Push the site definition to the list of known handlers:
 inventory::submit! {
-    &WatchMDHHandler as &dyn SiteDefinition
+    &ZZKTPlayerHandler as &dyn SiteDefinition
 }

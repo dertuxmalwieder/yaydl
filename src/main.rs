@@ -95,14 +95,9 @@ fn main() -> Result<()> {
         // https://kingjamesprogramming.tumblr.com/post/123368869357/1515-and-he-found-a-pair-of-eyes-scanning-the
         // ------------------------------------
 
-        // Find a known handler for <in_url>:
-        if !handler.can_handle_url(in_url).unwrap_or(false) {
-            continue;
+        if args.verbose {
+            println!("Trying {}.", handler.display_name());
         }
-
-        // This one is it.
-        site_def_found = true;
-        println!("Fetching from {}.", handler.display_name());
 
         // The WebDriver port could be an argument from the command line
         // or, to make life easier, from the environment variables
@@ -115,6 +110,18 @@ fn main() -> Result<()> {
         } else if webdriver_env.is_ok() {
             webdriverport = u16::from_str(&webdriver_env.unwrap_or("0".to_string())).unwrap_or(0);
         }
+
+        // Find a known handler for <in_url>:
+        if !handler
+            .can_handle_url(&mut video, in_url, webdriverport)
+            .unwrap_or(false)
+        {
+            continue;
+        }
+
+        // This one is it.
+        site_def_found = true;
+        println!("Fetching from {}.", handler.display_name());
 
         if handler.web_driver_required() && webdriverport == 0 {
             // This handler would need a web driver, but none is supplied to yaydl.
@@ -183,7 +190,7 @@ fn main() -> Result<()> {
                 if args.verbose {
                     println!("Starting the download.");
                 }
-
+                
                 let mut force_ffmpeg = false;
                 if handler.is_playlist(in_url, webdriverport).unwrap_or(false) {
                     // Multi-part download.

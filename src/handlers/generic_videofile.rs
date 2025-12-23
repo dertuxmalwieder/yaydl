@@ -28,7 +28,12 @@ use url::Url;
 // Implement the site definition:
 struct GenericFileHandler;
 impl SiteDefinition for GenericFileHandler {
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool> {
+    fn can_handle_url<'a>(
+        &'a self,
+        _video: &mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<bool> {
         Ok(Regex::new(r"\.mp(4|g)$").unwrap().is_match(url))
     }
 

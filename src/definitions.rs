@@ -23,7 +23,12 @@ use crate::VIDEO;
 // Define the public interface for site definitions:
 pub trait SiteDefinition: Sync + Send {
     // true, if this site can handle <url>.
-    fn can_handle_url<'a>(&'a self, url: &'a str) -> Result<bool>;
+    fn can_handle_url<'a>(
+        &'a self,
+        video: &mut VIDEO,
+        url: &'a str,
+        _webdriver_port: u16,
+    ) -> Result<bool>;
 
     // true, if the video exists.
     fn does_video_exist<'a>(
