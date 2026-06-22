@@ -111,6 +111,14 @@ fn main() -> Result<()> {
             webdriverport = u16::from_str(&webdriver_env.unwrap_or("0".to_string())).unwrap_or(0);
         }
 
+        if handler.web_driver_required() && webdriverport == 0 {
+            // This handler would need a web driver, but none is supplied to yaydl.
+            if args.verbose {
+                println!("{} requires a web driver installed and running as described in the README. Please tell yaydl which port to use (yaydl --webdriver <PORT>) and try again.", handler.display_name());
+            }
+            continue;
+        }
+        
         // Find a known handler for <in_url>:
         if !handler
             .can_handle_url(&mut video, in_url, webdriverport)
@@ -122,12 +130,6 @@ fn main() -> Result<()> {
         // This one is it.
         site_def_found = true;
         println!("Fetching from {}.", handler.display_name());
-
-        if handler.web_driver_required() && webdriverport == 0 {
-            // This handler would need a web driver, but none is supplied to yaydl.
-            println!("{} requires a web driver installed and running as described in the README. Please tell yaydl which port to use (yaydl --webdriver <PORT>) and try again.", handler.display_name());
-            continue;
-        }
 
         let video_exists = handler.does_video_exist(&mut video, in_url, webdriverport)?;
         if !video_exists {

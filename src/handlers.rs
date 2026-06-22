@@ -24,7 +24,6 @@ mod vidoza;
 mod vimeo;
 mod vivo;
 mod voe;
-mod watchmdh;
 mod xhamster;
 mod youtube; // actually, invidious
 
